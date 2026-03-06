@@ -1,0 +1,31 @@
+# ── Dependencies ──────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# ── Build outputs ─────────────────────────────────────────
+build/
+.svelte-kit/
+dist/
+/package
+
+# ── Tauri ─────────────────────────────────────────────────
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# ── Env & secrets ─────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+
+# ── IDE ───────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.iml

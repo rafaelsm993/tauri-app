@@ -1,0 +1,37 @@
+# Runs on every push to dev and on every PR targeting main or release/*
+# Checks: Svelte typecheck + Rust fmt/clippy/test
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main, "release/*"]
+
+jobs:
+  frontend:
+    name: Frontend — type-check & lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run check          # svelte-check
+      - run: npm run lint           # eslint / prettier (if configured)
+
+  backend:
+    name: Backend — fmt, clippy, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt, clippy }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: src-tauri }
+      - run: cargo fmt --check
+        working-directory: src-tauri
+      - run: cargo clippy -- -D warnings
+        working-directory: src-tauri
+      - run: cargo test
+        working-directory: src-tauri

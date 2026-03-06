@@ -1,0 +1,139 @@
+// ============================================================
+// TauriFlix — SCSS Variables & Mixins
+// Auto-injected into every component via vite.config.js
+// Use these alongside the CSS custom properties in global.css
+// ============================================================
+
+// ── Color Palette ──
+$color-bg-primary:    #080b10;   // matches --clr-bg
+$color-bg-secondary:  #161d27;   // matches --clr-surface
+$color-primary:       #e8b84b;   // matches --clr-gold (updated to cinematic gold)
+$color-accent:        #ff6b4a;   // matches --clr-accent
+$color-teal:          #3dd9c4;   // matches --clr-teal
+$color-text-main:     #eef0f5;   // matches --clr-text
+$color-text-muted:    #a8b0c0;   // matches --clr-text-2
+$color-text-faint:    #606878;   // matches --clr-text-3
+
+// ── Spacing ──
+$spacing-xs:  4px;
+$spacing-sm:  8px;
+$spacing-md:  16px;
+$spacing-lg:  24px;
+$spacing-xl:  32px;
+$spacing-2xl: 48px;
+
+// ── Border Radius ──
+$radius-sm:   4px;
+$radius-md:   8px;
+$radius-lg:   14px;
+$radius-xl:   20px;
+$radius-full: 9999px;
+
+// ── Typography ──
+$font-display: 'Bebas Neue', sans-serif;
+$font-body:    'DM Sans', sans-serif;
+$font-mono:    'DM Mono', monospace;
+
+// ── Breakpoints ──
+$bp-sm:  480px;
+$bp-md:  768px;
+$bp-lg:  1024px;
+$bp-xl:  1280px;
+$bp-2xl: 1440px;
+
+// ── Motion ──
+$ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+$ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+$dur-fast:   120ms;
+$dur-normal: 220ms;
+$dur-slow:   380ms;
+$dur-slower: 600ms;   // ← add this line
+
+// ============================================================
+// MIXINS
+// ============================================================
+
+
+// Flex center
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// Flex row with space-between
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+// Responsive breakpoint — mobile first
+// Usage: @include respond-to(md) { ... }
+@mixin respond-to($bp) {
+  @if $bp == sm  { @media (max-width: $bp-sm)  { @content; } }
+  @if $bp == md  { @media (max-width: $bp-md)  { @content; } }
+  @if $bp == lg  { @media (max-width: $bp-lg)  { @content; } }
+  @if $bp == xl  { @media (max-width: $bp-xl)  { @content; } }
+  @if $bp == 2xl { @media (max-width: $bp-2xl) { @content; } }
+}
+
+// Truncate text with ellipsis
+@mixin truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Glass surface
+@mixin glass($blur: 20px) {
+  background: rgba(22, 29, 39, 0.7);
+  backdrop-filter: blur($blur) saturate(1.4);
+  -webkit-backdrop-filter: blur($blur) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+// Gold glow shadow
+@mixin glow-gold {
+  box-shadow: 0 0 24px rgba(232, 184, 75, 0.35), 0 0 60px rgba(232, 184, 75, 0.12);
+}
+
+// Card hover lift
+@mixin card-lift {
+  transition:
+    transform $dur-slow $ease-out-expo,
+    box-shadow $dur-slow $ease-out-expo;
+
+  &:hover {
+    transform: translateY(-6px) scale(1.02);
+    @include glow-gold;
+  }
+}
+
+// Visually hidden (accessible)
+@mixin sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+// Absolute fill
+@mixin fill {
+  position: absolute;
+  inset: 0;
+}
+
+// Label style (uppercase mono tag)
+@mixin label-style {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: $color-primary;
+}
