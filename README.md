@@ -26,10 +26,9 @@ Tracks movies, TV series, anime, and books via TMDB, Jikan, and OpenLibrary.
 ```bash
 # Prerequisites: Node 20+, Rust stable, system WebView
 
-git clone https://github.com/your-org/tauriflix
-cd tauriflix
+git clone https://github.com/rafaelsm993/tauri-app
+cd tauri-app
 npm install
-cp .env.example .env   # add your TMDB_API_KEY
 npm run tauri dev
 ```
 
@@ -38,7 +37,6 @@ npm run tauri dev
 ```bash
 npm run tauri build    # produces installers in src-tauri/target/release/bundle/
 ```
-
 ## Branch Model
 
 | Branch        | Purpose                              |
