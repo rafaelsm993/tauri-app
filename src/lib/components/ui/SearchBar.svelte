@@ -1,36 +1,26 @@
 <script lang="ts">
   import { fade, scale } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
-  
-  // Svelte 5: Definindo props com runas, incluindo o callback de pesquisa
-  let { 
-    placeholder = "Busque filmes, séries, animes...", 
-    onSearch 
+
+  let {
+    placeholder = "Busque filmes, séries, animes...",
+    onSearch,
   } = $props<{
     placeholder?: string;
     onSearch?: (query: string) => void;
   }>();
 
-  // Estado interno da barra de pesquisa
-  let query = $state("");
+  let query     = $state("");
   let isFocused = $state(false);
-  let loading = $state(false);
+  let loading   = $state(false);
   let submitted = $state(false);
 
   function handleSubmit(event: SubmitEvent) {
-    // CRITICAL: prevent the form from doing a real HTTP submit (page reload)
     event.preventDefault();
-
     if (!query.trim()) return;
-
     loading   = true;
     submitted = false;
-
-    if (onSearch) {
-      onSearch(query.trim());
-    }
-
-    // Visual feedback — reset after 1.5 s
+    onSearch?.(query.trim());
     setTimeout(() => {
       loading   = false;
       submitted = true;
@@ -43,20 +33,19 @@
   }
 </script>
 
-<form 
-  class="search-bar-container" 
+<form
+  class="search-bar"
   class:focused={isFocused}
   class:loading={loading}
   class:submitted={submitted}
   onsubmit={handleSubmit}
 >
-  <div class="glass-morph" aria-hidden="true"></div>
-  
-  <div class="icon-section">
+  <div class="icon-wrap">
     {#if loading}
-      <div class="loader-spinner" transition:scale></div>
+      <div class="spinner" transition:scale></div>
     {:else}
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5">
         <circle cx="11" cy="11" r="8"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
@@ -67,18 +56,18 @@
     type="text"
     bind:value={query}
     {placeholder}
-    onfocus={() => isFocused = true}
-    onblur={() => isFocused = false}
+    onfocus={() => (isFocused = true)}
+    onblur={() => (isFocused = false)}
     aria-label="Campo de pesquisa"
   />
 
   {#if query.length > 0 && !loading}
-    <button 
-      type="button" 
-      class="clear-button" 
+    <button
+      type="button"
+      class="clear-btn"
       onclick={handleClear}
-      in:scale={{duration: 200, easing: cubicOut}} 
-      out:fade={{duration: 150}}
+      in:scale={{ duration: 200, easing: cubicOut }}
+      out:fade={{ duration: 150 }}
       aria-label="Limpar pesquisa"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -87,53 +76,45 @@
       </svg>
     </button>
   {/if}
-
 </form>
 
 <style lang="scss">
-  // Usando SCSS para aninhamento e variáveis
-  .search-bar-container {
+  .search-bar {
     position: relative;
     display: flex;
     align-items: center;
-    width: 100%;
-    height: 60px;
+    width: min(560px, 100%);
+    height: 52px;
     border-radius: $radius-full;
     padding: 0 $spacing-sm;
-    // Borda paramétrica sutil do seu global.css
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    overflow: hidden;
+    /* Solid background — backdrop-filter unreliable across stacking contexts */
+    background: rgba(18, 20, 26, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    transition:
+      border-color $dur-normal $ease-out-expo,
+      box-shadow   $dur-normal $ease-out-expo,
+      background   $dur-normal $ease-out-expo;
 
-    // Efeito de Glassmorphism usando mixin do variables.scss
-    .glass-morph {
-      @include glass(15px);
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      background: rgba(26, 26, 26, 0.5);
-    }
-
-    // Estados Reativos da Barra
     &.focused {
-      border-color: var(--clr-gold);
-      box-shadow: 0 0 20px rgba(232, 184, 75, 0.3);
-      background: rgba(26, 26, 26, 0.8);
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba(232, 184, 75, 0.15),
+                  0 4px 24px rgba(0, 0, 0, 0.4);
+      background: rgba(24, 26, 34, 0.95);
     }
 
     &.loading {
-      border-color: var(--clr-teal);
+      border-color: $color-teal;
     }
 
     &.submitted {
-      animation: pulseSuccess 0.5s ease-out;
+      animation: pulse-success 0.5s ease-out;
     }
   }
 
-  .icon-section {
-    position: relative;
-    z-index: 1;
-    width: 50px;
+  /* ── Icon ─────────────────────────────────────────────── */
+  .icon-wrap {
+    flex-shrink: 0;
+    width: 44px;
     height: 100%;
     display: flex;
     align-items: center;
@@ -141,83 +122,78 @@
   }
 
   .search-icon {
-    width: 24px;
-    height: 24px;
-    color: var(--clr-text-3);
-    transition: color 0.3s ease;
+    width: 20px;
+    height: 20px;
+    color: $color-text-muted;
+    transition: color $dur-normal ease;
+
+    .focused & { color: $color-primary; }
   }
 
-  .search-bar-container.focused .search-icon {
-    color: var(--clr-gold);
-  }
-
-  .loader-spinner {
-    width: 22px;
-    height: 22px;
-    border: 3px solid rgba(61, 217, 196, 0.2);
-    border-top-color: var(--clr-teal);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
+  /* ── Input ────────────────────────────────────────────── */
   input {
-    position: relative;
-    z-index: 1;
     flex: 1;
     height: 100%;
     background: transparent;
     border: none;
     outline: none;
-    color: var(--clr-text);
-    font-size: var(--size-md);
-    font-family: var(--font-body);
-    padding: 0 $spacing-sm;
+    color: $color-text-main;
+    font-size: 0.95rem;
+    font-family: $font-body;
+    padding: 0 $spacing-xs;
 
     &::placeholder {
-      color: var(--clr-text-3);
-      transition: color 0.3s ease;
+      color: $color-text-faint;
+      transition: color $dur-normal ease;
+    }
+
+    .focused &::placeholder {
+      color: rgba(255, 255, 255, 0.2);
     }
   }
 
-  .search-bar-container.focused input::placeholder {
-    color: rgba(255, 255, 255, 0.2);
+  /* ── Spinner ──────────────────────────────────────────── */
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2.5px solid rgba(61, 217, 196, 0.2);
+    border-top-color: $color-teal;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
   }
 
-  .clear-button {
-    position: relative;
-    z-index: 1;
-    background: rgba(255, 255, 255, 0.1);
+  /* ── Clear button ─────────────────────────────────────── */
+  .clear-btn {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.08);
     border: none;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    color: var(--clr-text);
+    color: $color-text-muted;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    margin-right: $spacing-sm;
-    transition: background 0.2s ease;
+    margin-left: $spacing-xs;
+    transition: background $dur-fast ease, color $dur-fast ease;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.2);
-      color: var(--clr-gold);
+      background: rgba(255, 255, 255, 0.16);
+      color: $color-primary;
     }
 
-    svg {
-      width: 16px;
-      height: 16px;
-    }
+    svg { width: 14px; height: 14px; }
   }
 
-  // Animações
+  /* ── Animations ───────────────────────────────────────── */
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
 
-  @keyframes pulseSuccess {
-    0% { box-shadow: 0 0 0 0 rgba(61, 217, 196, 0.6); }
-    70% { box-shadow: 0 0 0 15px rgba(61, 217, 196, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(61, 217, 196, 0); }
+  @keyframes pulse-success {
+    0%   { box-shadow: 0 0 0 0   rgba(61, 217, 196, 0.6); }
+    70%  { box-shadow: 0 0 0 12px rgba(61, 217, 196, 0);   }
+    100% { box-shadow: 0 0 0 0   rgba(61, 217, 196, 0);   }
   }
 </style>
