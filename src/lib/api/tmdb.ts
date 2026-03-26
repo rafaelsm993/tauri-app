@@ -6,7 +6,7 @@
 // and maps its raw response into the shared MediaItem / PaginatedResult.
 // ================================================================
 import { invoke } from '@tauri-apps/api/core';
-import type { MediaItem, PaginatedResult } from '$lib/types/media';
+import type { MediaItem, MediaDetail, PaginatedResult } from '$lib/types/media';
 
 // Raw TMDB envelope from Rust (serde_json::Value → JS object)
 interface RawPage { results: any[]; page: number; total_pages: number; total_results: number; }
@@ -37,6 +37,42 @@ function mapPage(raw: RawPage, type: 'movie' | 'tv'): PaginatedResult<MediaItem>
   };
 }
 
+// Map raw TMDB detail response into our MediaDetail
+function mapDetail(raw: any, type: 'movie' | 'tv'): MediaDetail {
+  const cast = (raw.credits?.cast ?? []).slice(0, 20).map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    character: c.character ?? '',
+    profile_path: c.profile_path ?? null,
+  }));
+
+  const videos = (raw.videos?.results ?? [])
+    .filter((v: any) => v.site === 'YouTube')
+    .map((v: any) => ({
+      key: v.key,
+      site: v.site,
+      type: v.type,
+      name: v.name,
+    }));
+
+  return {
+    id:            raw.id,
+    media_type:    type,
+    title:         raw.title ?? raw.name ?? 'Sem título',
+    tagline:       raw.tagline ?? '',
+    overview:      raw.overview ?? '',
+    poster_path:   raw.poster_path ?? null,
+    backdrop_path: raw.backdrop_path ?? null,
+    vote_average:  raw.vote_average ?? 0,
+    vote_count:    raw.vote_count ?? 0,
+    release_date:  raw.release_date ?? raw.first_air_date ?? '',
+    runtime:       raw.runtime ?? raw.episode_run_time?.[0] ?? null,
+    genres:        (raw.genres ?? []).map((g: any) => ({ id: g.id, name: g.name })),
+    cast,
+    videos,
+  };
+}
+
 export const TmdbAPI = {
   // Search movies by text query
   searchMovies: (query: string, page = 1) =>
@@ -55,8 +91,10 @@ export const TmdbAPI = {
     invoke<RawPage>('discover_series', { page }).then(r => mapPage(r, 'tv')),
 
   // Full movie details (videos + credits appended)
-  movieDetails: (id: number) => invoke<any>('movie_details', { id }),
+  movieDetails: (id: number): Promise<MediaDetail> =>
+    invoke<any>('movie_details', { id }).then(r => mapDetail(r, 'movie')),
 
   // Full series details
-  seriesDetails: (id: number) => invoke<any>('series_details', { id }),
+  seriesDetails: (id: number): Promise<MediaDetail> =>
+    invoke<any>('series_details', { id }).then(r => mapDetail(r, 'tv')),
 };

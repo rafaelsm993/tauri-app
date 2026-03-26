@@ -2,140 +2,165 @@
   import { onMount, onDestroy } from 'svelte';
 
   let canvas: HTMLCanvasElement;
-  let ctx: CanvasRenderingContext2D;
-  let animFrame: number;
-  let alive = false;   // guards against orphaned rAF loops after HMR
+  let ctx: CanvasRenderingContext2D | null = null;
+  let alive = false;
+  let W = 0;
+  let H = 0;
 
-
-  // Mouse — safe defaults, set in onMount
-  let mx = 0, my = 0;           // smoothed position
-  let tx = 0, ty = 0;           // target (raw mouse)
-  let pvx = 0, pvy = 0;         // previous target (for velocity)
+  let mx = 0, my = 0;
+  let tx = 0, ty = 0;
+  let px = 0, py = 0;
   let speed = 0;
-  let moveTO: ReturnType<typeof setTimeout>;
   let moving = false;
+  let moveTimer: ReturnType<typeof setTimeout>;
 
-  // Particles & ripples
-  interface P { x:number; y:number; vx:number; vy:number; life:number; ml:number; s:number; h:number }
-  interface R { x:number; y:number; r:number; mr:number; life:number }
-  let pts: P[] = [];
-  let rps: R[] = [];
+  const MAX_P = 60;
+  const particles: { x: number; y: number; vx: number; vy: number; life: number; ml: number; s: number; hue: number; on: boolean }[] = [];
+  for (let i = 0; i < MAX_P; i++) {
+    particles.push({ x: 0, y: 0, vx: 0, vy: 0, life: 0, ml: 1, s: 1, hue: 42, on: false });
+  }
 
-  let W = 0, H = 0;
+  const MAX_R = 3;
+  const ripples: { x: number; y: number; r: number; mr: number; life: number; on: boolean }[] = [];
+  for (let i = 0; i < MAX_R; i++) {
+    ripples.push({ x: 0, y: 0, r: 0, mr: 120, life: 0, on: false });
+  }
+
+  function emitParticle(x: number, y: number) {
+    for (const p of particles) {
+      if (!p.on) {
+        const a = Math.random() * 6.283;
+        const v = Math.random() * 1.2 + 0.3;
+        p.x = x; p.y = y;
+        p.vx = Math.cos(a) * v;
+        p.vy = Math.sin(a) * v - 0.15;
+        p.life = 1; p.ml = 45 + Math.random() * 45;
+        p.s = Math.random() * 2 + 0.5;
+        p.hue = [42, 170, 16][Math.floor(Math.random() * 3)];
+        p.on = true;
+        return;
+      }
+    }
+  }
+
+  function emitRipple(x: number, y: number) {
+    for (const r of ripples) {
+      if (!r.on) { r.x = x; r.y = y; r.r = 0; r.mr = 120; r.life = 1; r.on = true; return; }
+    }
+  }
 
   function resize() {
     if (!canvas) return;
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-
-  function addParticles(x: number, y: number, n: number) {
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const s = Math.random() * 1.4 + 0.3;
-      pts.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s - 0.2,
-        life: 1, ml: 55 + Math.random()*70, s: Math.random()*2.5+0.6,
-        h: [42,42,20,170][Math.floor(Math.random()*4)] });
-    }
-    if (pts.length > 160) pts.splice(0, pts.length - 160);
+    const dpr = window.devicePixelRatio || 1;
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   function draw() {
-    if (!ctx) return;
+    if (!alive || !ctx) return;
 
-    // velocity
-    const dvx = tx - pvx, dvy = ty - pvy;
-    speed = Math.sqrt(dvx*dvx + dvy*dvy);
-    pvx = tx; pvy = ty;
+    const dvx = tx - px, dvy = ty - py;
+    speed = Math.sqrt(dvx * dvx + dvy * dvy);
+    px = tx; py = ty;
 
-    // smooth mouse
-    const ease = moving ? 0.09 : 0.04;
+    const ease = moving ? 0.08 : 0.03;
     mx += (tx - mx) * ease;
     my += (ty - my) * ease;
 
-    // single clear
     ctx.clearRect(0, 0, W, H);
 
-    // ── Spotlight — one gradient, one fillRect ──
-    const r = 300 + Math.min(speed * 3, 120);
-    const g = ctx.createRadialGradient(mx, my, 0, mx, my, r);
-    g.addColorStop(0,   `rgba(232,184,75,${(0.08 + Math.min(speed*0.003, 0.06)).toFixed(3)})`);
-    g.addColorStop(0.5, 'rgba(232,184,75,0.025)');
-    g.addColorStop(1,   'rgba(232,184,75,0)');
-    ctx.fillStyle = g;
+    // Mouse spotlight — strong enough to be clearly visible
+    const spotR = 320 + Math.min(speed * 3, 160);
+    const spotA = 0.25 + Math.min(speed * 0.008, 0.15);
+    const sg = ctx.createRadialGradient(mx, my, 0, mx, my, spotR);
+    sg.addColorStop(0, `rgba(232,184,75,${spotA.toFixed(3)})`);
+    sg.addColorStop(0.35, `rgba(232,184,75,${(spotA * 0.3).toFixed(3)})`);
+    sg.addColorStop(1, 'rgba(232,184,75,0)');
+    ctx.fillStyle = sg;
     ctx.fillRect(0, 0, W, H);
 
-    // ── Particles ──
-    pts = pts.filter(p => p.life > 0);
-    for (const p of pts) {
+    // Secondary teal halo offset from cursor
+    const tealA = 0.12 + Math.min(speed * 0.004, 0.08);
+    const tg = ctx.createRadialGradient(mx + 40, my + 30, 0, mx + 40, my + 30, spotR * 0.7);
+    tg.addColorStop(0, `rgba(61,217,196,${tealA.toFixed(3)})`);
+    tg.addColorStop(0.4, `rgba(61,217,196,${(tealA * 0.2).toFixed(3)})`);
+    tg.addColorStop(1, 'rgba(61,217,196,0)');
+    ctx.fillStyle = tg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Particles
+    for (const p of particles) {
+      if (!p.on) continue;
       p.x += p.vx; p.y += p.vy;
-      p.vy -= 0.012; p.vx *= 0.98;
+      p.vy -= 0.01; p.vx *= 0.98;
       p.life -= 1 / p.ml;
-      const rad = Math.max(0.1, p.s * p.life);
+      if (p.life <= 0) { p.on = false; continue; }
+      const r = p.s * p.life;
+      if (r < 0.2) continue;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, rad, 0, Math.PI*2);
-      ctx.fillStyle = `hsla(${p.h},80%,65%,${(p.life*0.7).toFixed(3)})`;
+      ctx.arc(p.x, p.y, r, 0, 6.283);
+      ctx.fillStyle = `hsla(${p.hue},75%,62%,${(p.life * 0.6).toFixed(2)})`;
       ctx.fill();
     }
 
-    // ── Ripples ──
-    rps = rps.filter(r => r.life > 0);
-    for (const r of rps) {
-      r.r   += (r.mr - r.r) * 0.07;
-      r.life -= 0.016;
+    // Ripples
+    for (const rp of ripples) {
+      if (!rp.on) continue;
+      rp.r += (rp.mr - rp.r) * 0.06;
+      rp.life -= 0.02;
+      if (rp.life <= 0) { rp.on = false; continue; }
       ctx.beginPath();
-      ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
-      ctx.strokeStyle = `rgba(232,184,75,${(r.life*0.5).toFixed(3)})`;
-      ctx.lineWidth = 2 * r.life;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(r.x, r.y, r.r * 0.5, 0, Math.PI*2);
-      ctx.strokeStyle = `rgba(61,217,196,${(r.life*0.28).toFixed(3)})`;
-      ctx.lineWidth = 1.2 * r.life;
+      ctx.arc(rp.x, rp.y, rp.r, 0, 6.283);
+      ctx.strokeStyle = `rgba(232,184,75,${(rp.life * 0.4).toFixed(2)})`;
+      ctx.lineWidth = 1.5 * rp.life;
       ctx.stroke();
     }
 
-    if (alive) animFrame = requestAnimationFrame(draw);
+    requestAnimationFrame(draw);
   }
 
   function onMove(e: MouseEvent) {
     tx = e.clientX; ty = e.clientY;
     moving = true;
-    clearTimeout(moveTO);
-    moveTO = setTimeout(() => (moving = false), 180);
-    if (speed > 14 && Math.random() < 0.25) addParticles(e.clientX, e.clientY, 2);
+    clearTimeout(moveTimer);
+    moveTimer = setTimeout(() => { moving = false; }, 180);
+    if (speed > 12 && Math.random() < 0.25) emitParticle(e.clientX, e.clientY);
   }
 
   function onClick(e: MouseEvent) {
-    addParticles(e.clientX, e.clientY, 16);
-    rps.push({ x: e.clientX, y: e.clientY, r: 0, mr: 160, life: 1 });
+    for (let i = 0; i < 8; i++) emitParticle(e.clientX, e.clientY);
+    emitRipple(e.clientX, e.clientY);
   }
 
   onMount(() => {
     alive = true;
-    mx = tx = pvx = window.innerWidth  / 2;
-    my = ty = pvy = window.innerHeight / 2;
-    ctx = canvas.getContext('2d')!;
+    mx = tx = px = window.innerWidth / 2;
+    my = ty = py = window.innerHeight / 2;
+    ctx = canvas.getContext('2d');
+    console.log('[bg] mount — canvas:', canvas.offsetWidth, 'x', canvas.offsetHeight, 'ctx:', !!ctx, 'dpr:', window.devicePixelRatio);
     resize();
-    draw();
+    requestAnimationFrame(draw);
     window.addEventListener('mousemove', onMove, { passive: true });
-    window.addEventListener('click',     onClick);
-    window.addEventListener('resize',    resize);
+    window.addEventListener('click', onClick);
+    window.addEventListener('resize', resize);
   });
 
   onDestroy(() => {
-    alive = true;
-    cancelAnimationFrame(animFrame);
-    clearTimeout(moveTO);
+    alive = false;
+    clearTimeout(moveTimer);
     window.removeEventListener('mousemove', onMove);
-    window.removeEventListener('click',     onClick);
-    window.removeEventListener('resize',    resize);
+    window.removeEventListener('click', onClick);
+    window.removeEventListener('resize', resize);
   });
 </script>
 
-<canvas bind:this={canvas} id="bg-canvas"></canvas>
-<div class="bg-orb bg-orb-1" aria-hidden="true"></div>
-<div class="bg-orb bg-orb-2" aria-hidden="true"></div>
-<div class="bg-orb bg-orb-3" aria-hidden="true"></div>
-<div class="bg-orb bg-orb-4" aria-hidden="true"></div>
-<div class="bg-vignette"     aria-hidden="true"></div>
+<div class="bg-layer" aria-hidden="true">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+  <canvas bind:this={canvas} class="bg-canvas"></canvas>
+  <div class="bg-vignette"></div>
+</div>
