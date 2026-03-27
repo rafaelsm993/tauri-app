@@ -2,27 +2,24 @@
   import { fade, scale } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
 
-  let {
-    placeholder = "Busque filmes, séries, animes...",
-    onSearch,
-  } = $props<{
+  let { placeholder = "Busque filmes, séries, animes...", onSearch } = $props<{
     placeholder?: string;
     onSearch?: (query: string) => void;
   }>();
 
-  let query     = $state("");
+  let query = $state("");
   let isFocused = $state(false);
-  let loading   = $state(false);
+  let loading = $state(false);
   let submitted = $state(false);
 
   function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     if (!query.trim()) return;
-    loading   = true;
+    loading = true;
     submitted = false;
     onSearch?.(query.trim());
     setTimeout(() => {
-      loading   = false;
+      loading = false;
       submitted = true;
       setTimeout(() => (submitted = false), 2000);
     }, 1500);
@@ -36,16 +33,21 @@
 <form
   class="search-bar"
   class:focused={isFocused}
-  class:loading={loading}
-  class:submitted={submitted}
+  class:loading
+  class:submitted
   onsubmit={handleSubmit}
 >
   <div class="icon-wrap">
     {#if loading}
       <div class="spinner" transition:scale></div>
     {:else}
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2.5">
+      <svg
+        class="search-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+      >
         <circle cx="11" cy="11" r="8"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
@@ -70,7 +72,12 @@
       out:fade={{ duration: 150 }}
       aria-label="Limpar pesquisa"
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+      >
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
       </svg>
@@ -88,18 +95,19 @@
     border-radius: $radius-full;
     padding: 0 $spacing-sm;
     /* Solid background — backdrop-filter unreliable across stacking contexts */
-    background: rgba(18, 20, 26, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(10, 10, 10, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     transition:
       border-color $dur-normal $ease-out-expo,
-      box-shadow   $dur-normal $ease-out-expo,
-      background   $dur-normal $ease-out-expo;
+      box-shadow $dur-normal $ease-out-expo,
+      background $dur-normal $ease-out-expo;
 
     &.focused {
       border-color: $color-primary;
-      box-shadow: 0 0 0 3px rgba(232, 184, 75, 0.15),
-                  0 4px 24px rgba(0, 0, 0, 0.4);
-      background: rgba(24, 26, 34, 0.95);
+      box-shadow:
+        0 0 0 3px rgba($color-primary, 0.15),
+        0 4px 24px rgba(0, 0, 0, 0.4);
+      background: rgba(10, 10, 10, 0.95);
     }
 
     &.loading {
@@ -127,7 +135,9 @@
     color: $color-text-muted;
     transition: color $dur-normal ease;
 
-    .focused & { color: $color-primary; }
+    .focused & {
+      color: $color-primary;
+    }
   }
 
   /* ── Input ────────────────────────────────────────────── */
@@ -156,8 +166,8 @@
   .spinner {
     width: 20px;
     height: 20px;
-    border: 2.5px solid rgba(61, 217, 196, 0.2);
-    border-top-color: $color-teal;
+    border: 2.5px solid rgba($color-primary, 0.2);
+    border-top-color: $color-primary;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
@@ -176,24 +186,37 @@
     justify-content: center;
     cursor: pointer;
     margin-left: $spacing-xs;
-    transition: background $dur-fast ease, color $dur-fast ease;
+    transition:
+      background $dur-fast ease,
+      color $dur-fast ease;
 
     &:hover {
       background: rgba(255, 255, 255, 0.16);
       color: $color-primary;
     }
 
-    svg { width: 14px; height: 14px; }
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
 
   /* ── Animations ───────────────────────────────────────── */
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @keyframes pulse-success {
-    0%   { box-shadow: 0 0 0 0   rgba(61, 217, 196, 0.6); }
-    70%  { box-shadow: 0 0 0 12px rgba(61, 217, 196, 0);   }
-    100% { box-shadow: 0 0 0 0   rgba(61, 217, 196, 0);   }
+    0% {
+      box-shadow: 0 0 0 0 rgba($color-primary, 0.6);
+    }
+    70% {
+      box-shadow: 0 0 0 12px rgba($color-primary, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba($color-primary, 0);
+    }
   }
 </style>

@@ -1,166 +1,289 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onDestroy } from "svelte";
+  import { ui } from "$lib/stores/ui.svelte";
 
-  let canvas: HTMLCanvasElement;
-  let ctx: CanvasRenderingContext2D | null = null;
-  let alive = false;
-  let W = 0;
-  let H = 0;
+  const BUBBLE_COUNT = 20;
+  let pulsing = $state(false);
+  let pulseTimer: ReturnType<typeof setTimeout>;
 
-  let mx = 0, my = 0;
-  let tx = 0, ty = 0;
-  let px = 0, py = 0;
-  let speed = 0;
-  let moving = false;
-  let moveTimer: ReturnType<typeof setTimeout>;
-
-  const MAX_P = 60;
-  const particles: { x: number; y: number; vx: number; vy: number; life: number; ml: number; s: number; hue: number; on: boolean }[] = [];
-  for (let i = 0; i < MAX_P; i++) {
-    particles.push({ x: 0, y: 0, vx: 0, vy: 0, life: 0, ml: 1, s: 1, hue: 42, on: false });
-  }
-
-  const MAX_R = 3;
-  const ripples: { x: number; y: number; r: number; mr: number; life: number; on: boolean }[] = [];
-  for (let i = 0; i < MAX_R; i++) {
-    ripples.push({ x: 0, y: 0, r: 0, mr: 120, life: 0, on: false });
-  }
-
-  function emitParticle(x: number, y: number) {
-    for (const p of particles) {
-      if (!p.on) {
-        const a = Math.random() * 6.283;
-        const v = Math.random() * 1.2 + 0.3;
-        p.x = x; p.y = y;
-        p.vx = Math.cos(a) * v;
-        p.vy = Math.sin(a) * v - 0.15;
-        p.life = 1; p.ml = 45 + Math.random() * 45;
-        p.s = Math.random() * 2 + 0.5;
-        p.hue = [42, 170, 16][Math.floor(Math.random() * 3)];
-        p.on = true;
-        return;
-      }
+  $effect(() => {
+    const click = ui.lastClick;
+    if (click) {
+      pulsing = true;
+      clearTimeout(pulseTimer);
+      pulseTimer = setTimeout(() => {
+        pulsing = false;
+      }, 900);
     }
-  }
-
-  function emitRipple(x: number, y: number) {
-    for (const r of ripples) {
-      if (!r.on) { r.x = x; r.y = y; r.r = 0; r.mr = 120; r.life = 1; r.on = true; return; }
-    }
-  }
-
-  function resize() {
-    if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  function draw() {
-    if (!alive || !ctx) return;
-
-    const dvx = tx - px, dvy = ty - py;
-    speed = Math.sqrt(dvx * dvx + dvy * dvy);
-    px = tx; py = ty;
-
-    const ease = moving ? 0.08 : 0.03;
-    mx += (tx - mx) * ease;
-    my += (ty - my) * ease;
-
-    ctx.clearRect(0, 0, W, H);
-
-    // Mouse spotlight — strong enough to be clearly visible
-    const spotR = 320 + Math.min(speed * 3, 160);
-    const spotA = 0.25 + Math.min(speed * 0.008, 0.15);
-    const sg = ctx.createRadialGradient(mx, my, 0, mx, my, spotR);
-    sg.addColorStop(0, `rgba(232,184,75,${spotA.toFixed(3)})`);
-    sg.addColorStop(0.35, `rgba(232,184,75,${(spotA * 0.3).toFixed(3)})`);
-    sg.addColorStop(1, 'rgba(232,184,75,0)');
-    ctx.fillStyle = sg;
-    ctx.fillRect(0, 0, W, H);
-
-    // Secondary teal halo offset from cursor
-    const tealA = 0.12 + Math.min(speed * 0.004, 0.08);
-    const tg = ctx.createRadialGradient(mx + 40, my + 30, 0, mx + 40, my + 30, spotR * 0.7);
-    tg.addColorStop(0, `rgba(61,217,196,${tealA.toFixed(3)})`);
-    tg.addColorStop(0.4, `rgba(61,217,196,${(tealA * 0.2).toFixed(3)})`);
-    tg.addColorStop(1, 'rgba(61,217,196,0)');
-    ctx.fillStyle = tg;
-    ctx.fillRect(0, 0, W, H);
-
-    // Particles
-    for (const p of particles) {
-      if (!p.on) continue;
-      p.x += p.vx; p.y += p.vy;
-      p.vy -= 0.01; p.vx *= 0.98;
-      p.life -= 1 / p.ml;
-      if (p.life <= 0) { p.on = false; continue; }
-      const r = p.s * p.life;
-      if (r < 0.2) continue;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r, 0, 6.283);
-      ctx.fillStyle = `hsla(${p.hue},75%,62%,${(p.life * 0.6).toFixed(2)})`;
-      ctx.fill();
-    }
-
-    // Ripples
-    for (const rp of ripples) {
-      if (!rp.on) continue;
-      rp.r += (rp.mr - rp.r) * 0.06;
-      rp.life -= 0.02;
-      if (rp.life <= 0) { rp.on = false; continue; }
-      ctx.beginPath();
-      ctx.arc(rp.x, rp.y, rp.r, 0, 6.283);
-      ctx.strokeStyle = `rgba(232,184,75,${(rp.life * 0.4).toFixed(2)})`;
-      ctx.lineWidth = 1.5 * rp.life;
-      ctx.stroke();
-    }
-
-    requestAnimationFrame(draw);
-  }
-
-  function onMove(e: MouseEvent) {
-    tx = e.clientX; ty = e.clientY;
-    moving = true;
-    clearTimeout(moveTimer);
-    moveTimer = setTimeout(() => { moving = false; }, 180);
-    if (speed > 12 && Math.random() < 0.25) emitParticle(e.clientX, e.clientY);
-  }
-
-  function onClick(e: MouseEvent) {
-    for (let i = 0; i < 8; i++) emitParticle(e.clientX, e.clientY);
-    emitRipple(e.clientX, e.clientY);
-  }
-
-  onMount(() => {
-    alive = true;
-    mx = tx = px = window.innerWidth / 2;
-    my = ty = py = window.innerHeight / 2;
-    ctx = canvas.getContext('2d');
-    console.log('[bg] mount — canvas:', canvas.offsetWidth, 'x', canvas.offsetHeight, 'ctx:', !!ctx, 'dpr:', window.devicePixelRatio);
-    resize();
-    requestAnimationFrame(draw);
-    window.addEventListener('mousemove', onMove, { passive: true });
-    window.addEventListener('click', onClick);
-    window.addEventListener('resize', resize);
   });
 
   onDestroy(() => {
-    alive = false;
-    clearTimeout(moveTimer);
-    window.removeEventListener('mousemove', onMove);
-    window.removeEventListener('click', onClick);
-    window.removeEventListener('resize', resize);
+    clearTimeout(pulseTimer);
   });
 </script>
 
 <div class="bg-layer" aria-hidden="true">
-  <div class="bg-orb bg-orb-1"></div>
-  <div class="bg-orb bg-orb-2"></div>
-  <div class="bg-orb bg-orb-3"></div>
-  <canvas bind:this={canvas} class="bg-canvas"></canvas>
+  <div class="bg-area" class:pulsing>
+    <ul class="circles">
+      {#each { length: BUBBLE_COUNT } as _}
+        <li></li>
+      {/each}
+    </ul>
+  </div>
   <div class="bg-vignette"></div>
 </div>
+
+<style lang="scss">
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  // ── Floating bubbles ──
+  .bg-area {
+    position: absolute;
+    inset: 0;
+    background: $color-bg-primary;
+
+    // Smooth radial red glows on solid black — blurred to eliminate banding
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+          ellipse 130% 90% at 15% 100%,
+          rgba($color-primary, 0.12) 0%,
+          rgba($color-primary, 0.06) 25%,
+          rgba($color-primary, 0.02) 45%,
+          transparent 70%
+        ),
+        radial-gradient(
+          ellipse 110% 80% at 85% 0%,
+          rgba($color-accent, 0.08) 0%,
+          rgba($color-accent, 0.03) 30%,
+          transparent 60%
+        );
+      filter: blur(40px);
+    }
+  }
+
+  .circles {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .circles li {
+    position: absolute;
+    display: block;
+    list-style: none;
+    width: 20px;
+    height: 20px;
+    background: rgba($color-primary, 0.1);
+    animation: float 18s linear infinite;
+    bottom: -160px;
+  }
+
+  // ── 20 bubbles: varied sizes, positions, speeds ──
+  .circles li:nth-child(1) {
+    left: 5%;
+    width: 70px;
+    height: 70px;
+    animation-duration: 10s;
+    animation-delay: 0s;
+    background: rgba($color-primary, 0.1);
+  }
+  .circles li:nth-child(2) {
+    left: 15%;
+    width: 18px;
+    height: 18px;
+    animation-duration: 7s;
+    animation-delay: 1s;
+    background: rgba($color-accent, 0.14);
+  }
+  .circles li:nth-child(3) {
+    left: 25%;
+    width: 90px;
+    height: 90px;
+    animation-duration: 14s;
+    animation-delay: 0s;
+    background: rgba($color-primary, 0.07);
+  }
+  .circles li:nth-child(4) {
+    left: 35%;
+    width: 14px;
+    height: 14px;
+    animation-duration: 8s;
+    animation-delay: 2s;
+    background: rgba($color-primary, 0.16);
+  }
+  .circles li:nth-child(5) {
+    left: 42%;
+    width: 55px;
+    height: 55px;
+    animation-duration: 11s;
+    animation-delay: 0.5s;
+    background: rgba($color-accent, 0.09);
+  }
+  .circles li:nth-child(6) {
+    left: 52%;
+    width: 120px;
+    height: 120px;
+    animation-duration: 16s;
+    animation-delay: 3s;
+    background: rgba($color-primary, 0.05);
+  }
+  .circles li:nth-child(7) {
+    left: 60%;
+    width: 22px;
+    height: 22px;
+    animation-duration: 6s;
+    animation-delay: 1.5s;
+    background: rgba($color-primary, 0.14);
+  }
+  .circles li:nth-child(8) {
+    left: 70%;
+    width: 40px;
+    height: 40px;
+    animation-duration: 9s;
+    animation-delay: 0s;
+    background: rgba($color-accent, 0.11);
+  }
+  .circles li:nth-child(9) {
+    left: 80%;
+    width: 16px;
+    height: 16px;
+    animation-duration: 7s;
+    animation-delay: 4s;
+    background: rgba($color-primary, 0.18);
+  }
+  .circles li:nth-child(10) {
+    left: 90%;
+    width: 130px;
+    height: 130px;
+    animation-duration: 13s;
+    animation-delay: 0s;
+    background: rgba($color-primary, 0.04);
+  }
+  .circles li:nth-child(11) {
+    left: 2%;
+    width: 28px;
+    height: 28px;
+    animation-duration: 8s;
+    animation-delay: 2.5s;
+    background: rgba($color-accent, 0.12);
+  }
+  .circles li:nth-child(12) {
+    left: 18%;
+    width: 50px;
+    height: 50px;
+    animation-duration: 10s;
+    animation-delay: 1s;
+    background: rgba($color-primary, 0.08);
+  }
+  .circles li:nth-child(13) {
+    left: 30%;
+    width: 12px;
+    height: 12px;
+    animation-duration: 5s;
+    animation-delay: 0s;
+    background: rgba($color-primary, 0.2);
+  }
+  .circles li:nth-child(14) {
+    left: 48%;
+    width: 80px;
+    height: 80px;
+    animation-duration: 12s;
+    animation-delay: 3.5s;
+    background: rgba($color-accent, 0.06);
+  }
+  .circles li:nth-child(15) {
+    left: 55%;
+    width: 16px;
+    height: 16px;
+    animation-duration: 6s;
+    animation-delay: 0.8s;
+    background: rgba($color-primary, 0.16);
+  }
+  .circles li:nth-child(16) {
+    left: 65%;
+    width: 100px;
+    height: 100px;
+    animation-duration: 15s;
+    animation-delay: 2s;
+    background: rgba($color-primary, 0.05);
+  }
+  .circles li:nth-child(17) {
+    left: 75%;
+    width: 24px;
+    height: 24px;
+    animation-duration: 7s;
+    animation-delay: 1.2s;
+    background: rgba($color-accent, 0.13);
+  }
+  .circles li:nth-child(18) {
+    left: 85%;
+    width: 45px;
+    height: 45px;
+    animation-duration: 9s;
+    animation-delay: 0s;
+    background: rgba($color-primary, 0.09);
+  }
+  .circles li:nth-child(19) {
+    left: 10%;
+    width: 10px;
+    height: 10px;
+    animation-duration: 4s;
+    animation-delay: 0.3s;
+    background: rgba($color-primary, 0.22);
+  }
+  .circles li:nth-child(20) {
+    left: 95%;
+    width: 35px;
+    height: 35px;
+    animation-duration: 8s;
+    animation-delay: 5s;
+    background: rgba($color-accent, 0.1);
+  }
+
+  // Pulse — flash bubbles brighter on card click
+  .bg-area.pulsing .circles li {
+    background: rgba($color-primary, 0.3);
+    transition: background 0.2s ease-out;
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+      border-radius: 0;
+    }
+    50% {
+      opacity: 0.6;
+      border-radius: 25%;
+    }
+    100% {
+      transform: translateY(-110vh) rotate(540deg);
+      opacity: 0;
+      border-radius: 50%;
+    }
+  }
+
+  // ── Vignette ──
+  .bg-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 100% 100% at 50% 50%,
+      transparent 25%,
+      rgba($color-bg-primary, 0.4) 55%,
+      rgba($color-bg-primary, 0.8) 100%
+    );
+    z-index: 1;
+  }
+</style>
