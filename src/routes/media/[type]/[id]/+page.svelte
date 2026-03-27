@@ -1,13 +1,21 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import { onDestroy } from "svelte";
   import { TmdbAPI } from "$lib/api/tmdb";
   import type { MediaDetail } from "$lib/types/media";
   import { TMDB_IMG } from "$lib/types/media";
+  import { ui } from "$lib/stores/ui.svelte";
 
   let detail = $state<MediaDetail | null>(null);
   let loading = $state(true);
   let error = $state("");
+
+  // Toggle detail background mode
+  ui.detailMode = true;
+  onDestroy(() => {
+    ui.detailMode = false;
+  });
 
   // Drag-to-scroll for cast row
   let castEl = $state<HTMLDivElement | undefined>(undefined);
@@ -192,7 +200,7 @@
           <h3 class="section-title">Trailer</h3>
           <div class="trailer-wrapper">
             <iframe
-              src="https://www.youtube.com/embed/{trailer.key}"
+              src="https://www.youtube.com/embed/{trailer.key}?rel=0&modestbranding=1"
               title={trailer.name}
               frameborder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -413,6 +421,14 @@
     border-radius: $radius-md;
     overflow: hidden;
     background: $color-bg-secondary;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: box-shadow $dur-normal $ease-out-expo;
+
+    &:hover {
+      box-shadow:
+        0 0 0 2px $color-primary,
+        0 8px 32px rgba(0, 0, 0, 0.5);
+    }
 
     iframe {
       position: absolute;

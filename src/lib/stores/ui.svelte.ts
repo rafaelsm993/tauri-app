@@ -11,6 +11,9 @@ class UIStore {
     // Registra o último clique global para criar uma onda de choque épica no Canvas
     lastClick = $state<{ x: number, y: number, time: number } | null>(null);
 
+    // When true, background switches to the geometric detail-page pattern
+    detailMode = $state(false);
+
     // Métodos utilitários
     triggerClickPulse(x: number, y: number) {
         this.lastClick = { x, y, time: Date.now() };
