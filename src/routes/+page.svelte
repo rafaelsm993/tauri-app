@@ -1,42 +1,47 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import { TmdbAPI } from '$lib/api/tmdb';
-  import type { MediaItem, PaginatedResult } from '$lib/types/media';
-  import MediaCard from '$lib/components/media/MediaCard.svelte';
-  import SearchBar from '$lib/components/ui/SearchBar.svelte';
+  import { onMount, onDestroy } from "svelte";
+  import { goto } from "$app/navigation";
+  import { TmdbAPI } from "$lib/api/tmdb";
+  import type { MediaItem, PaginatedResult } from "$lib/types/media";
+  import MediaCard from "$lib/components/media/MediaCard.svelte";
+  import SearchBar from "$lib/components/ui/SearchBar.svelte";
 
-  let items      = $state<MediaItem[]>([]);
-  let query      = $state('');
-  let page       = $state(1);
+  let items = $state<MediaItem[]>([]);
+  let query = $state("");
+  let page = $state(1);
   let totalPages = $state(1);
-  let isSearch   = $state(false);
-  let loading    = $state(false);
-  let appending  = $state(false);
-  let error      = $state('');
+  let isSearch = $state(false);
+  let loading = $state(false);
+  let appending = $state(false);
+  let error = $state("");
 
   const hasMore = $derived(page < totalPages && !error);
 
   let sentinel = $state<HTMLDivElement | undefined>(undefined);
   let observer: IntersectionObserver;
 
-  async function fetchPage(q: string, p: number): Promise<PaginatedResult<MediaItem>> {
+  async function fetchPage(
+    q: string,
+    p: number,
+  ): Promise<PaginatedResult<MediaItem>> {
     return q.trim() ? TmdbAPI.searchMovies(q, p) : TmdbAPI.discoverMovies(p);
   }
 
-  async function load(newQuery = '') {
+  async function load(newQuery = "") {
     if (loading) return;
-    query    = newQuery;
+    query = newQuery;
     isSearch = !!newQuery.trim();
-    page     = 1;
-    items    = [];
-    error    = '';
-    loading  = true;
+    page = 1;
+    items = [];
+    error = "";
+    loading = true;
     try {
-      const res  = await fetchPage(newQuery, 1);
-      items      = res.results;
+      const res = await fetchPage(newQuery, 1);
+      items = res.results;
       totalPages = res.total_pages ?? 1;
     } catch (e: any) {
-      error = typeof e === 'string' ? e : (e?.message ?? 'Erro ao buscar dados.');
+      error =
+        typeof e === "string" ? e : (e?.message ?? "Erro ao buscar dados.");
     } finally {
       loading = false;
     }
@@ -47,11 +52,12 @@
     appending = true;
     try {
       const next = page + 1;
-      const res  = await fetchPage(query, next);
-      items      = [...items, ...res.results];
-      page       = next;
+      const res = await fetchPage(query, next);
+      items = [...items, ...res.results];
+      page = next;
     } catch (e: any) {
-      error = typeof e === 'string' ? e : (e?.message ?? 'Erro ao carregar mais.');
+      error =
+        typeof e === "string" ? e : (e?.message ?? "Erro ao carregar mais.");
     } finally {
       appending = false;
     }
@@ -60,8 +66,10 @@
   function attachObserver() {
     observer?.disconnect();
     observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) loadMore(); },
-      { rootMargin: '300px' }
+      ([entry]) => {
+        if (entry.isIntersecting) loadMore();
+      },
+      { rootMargin: "300px" },
     );
     if (sentinel) observer.observe(sentinel);
   }
@@ -70,7 +78,10 @@
     if (!loading && items.length > 0 && sentinel) attachObserver();
   });
 
-  onMount(() => { load(); attachObserver(); });
+  onMount(() => {
+    load();
+    attachObserver();
+  });
   onDestroy(() => observer?.disconnect());
 </script>
 
@@ -82,9 +93,11 @@
 {/snippet}
 
 <div class="page">
-
   <header class="page-header">
-    <SearchBar onSearch={(q) => load(q)} placeholder="Buscar filmes, séries, anime…" />
+    <SearchBar
+      onSearch={(q) => load(q)}
+      placeholder="Buscar filmes, séries, anime…"
+    />
     {#if !loading}
       <p class="page-context">
         {#if isSearch}
@@ -110,14 +123,12 @@
         {@render SkeletonCard()}
       {/each}
     </div>
-
   {:else if !error && items.length === 0}
     <p class="page-empty">Nenhum resultado encontrado.</p>
-
   {:else}
     <div class="grid">
       {#each items as item (item.id)}
-        <MediaCard {item} onclick={() => console.log('open', item.id)} />
+        <MediaCard {item} onclick={() => goto(`/media/${item.media_type}/${item.id}`)} />
       {/each}
       {#if appending}
         {#each { length: 8 } as _}
@@ -132,15 +143,10 @@
       <p class="page-end">— Fim dos resultados —</p>
     {/if}
   {/if}
-
 </div>
 
 <style lang="scss">
   .page {
-    /* KEY FIX: z-index 5 puts page content above the vignette (z-index 3)
-       and canvas/orbs (z-index 2) from AppBackground */
-    position: relative;
-    z-index: 5;
     padding: $spacing-lg $spacing-xl $spacing-2xl;
     max-width: 1440px;
     margin-inline: auto;
@@ -161,7 +167,11 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
 
-    strong { color: $color-text-muted; font-weight: 600; text-transform: none; }
+    strong {
+      color: $color-text-muted;
+      font-weight: 600;
+      text-transform: none;
+    }
   }
 
   .link-btn {
@@ -173,7 +183,9 @@
     margin-left: $spacing-sm;
     padding: 0;
     text-decoration: underline;
-    &:hover { color: $color-text-main; }
+    &:hover {
+      color: $color-text-main;
+    }
   }
 
   // ── Grid ────────────────────────────────────────────────
@@ -197,14 +209,15 @@
     overflow: hidden;
     position: relative;
     &::after {
-      content: '';
-      position: absolute; inset: 0;
+      content: "";
+      position: absolute;
+      inset: 0;
       background: linear-gradient(
         100deg,
         transparent 0%,
-        rgba(255,255,255,0.05) 45%,
-        rgba(255,255,255,0.09) 50%,
-        rgba(255,255,255,0.05) 55%,
+        rgba(255, 255, 255, 0.05) 45%,
+        rgba(255, 255, 255, 0.09) 50%,
+        rgba(255, 255, 255, 0.05) 55%,
         transparent 100%
       );
       background-size: 200% 100%;
@@ -216,11 +229,18 @@
     height: 9px;
     border-radius: $radius-sm;
     background: $color-bg-secondary;
-    position: relative; overflow: hidden;
+    position: relative;
+    overflow: hidden;
     &::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        100deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        transparent 100%
+      );
       background-size: 200% 100%;
       animation: shimmer 1.7s ease-in-out infinite 0.15s;
     }
@@ -247,11 +267,14 @@
       border-radius: $radius-sm;
       font-size: 0.76rem;
       cursor: pointer;
-      &:hover { background: rgba(255, 82, 99, 0.1); }
+      &:hover {
+        background: rgba(255, 82, 99, 0.1);
+      }
     }
   }
 
-  .page-empty, .page-end {
+  .page-empty,
+  .page-end {
     text-align: center;
     color: $color-text-faint;
     font-size: 0.78rem;
@@ -259,10 +282,16 @@
     padding: $spacing-2xl 0;
   }
 
-  .sentinel { height: 1px; }
+  .sentinel {
+    height: 1px;
+  }
 
   @keyframes shimmer {
-    0%   { background-position:  200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 </style>
