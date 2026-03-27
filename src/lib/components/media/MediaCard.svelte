@@ -1,27 +1,25 @@
 <script lang="ts">
-  import type { MediaItem } from '$lib/types/media';
-  import { TMDB_IMG, getYear, getRating } from '$lib/types/media';
+  import type { MediaItem } from "$lib/types/media";
+  import { TMDB_IMG, getYear, getRating } from "$lib/types/media";
 
   let { item, onclick } = $props<{
     item: MediaItem;
     onclick?: () => void;
   }>();
 
-  let loaded  = $state(false);
+  let loaded = $state(false);
   let errored = $state(false);
 
   // $derived ensures these re-evaluate if item prop changes
-  const poster = $derived(TMDB_IMG.poster(item.poster_path, 'w342'));
-  const year   = $derived(getYear(item));
+  const poster = $derived(TMDB_IMG.poster(item.poster_path, "w342"));
+  const year = $derived(getYear(item));
   const rating = $derived(getRating(item));
-  const badge  = $derived(item.media_type === 'tv' ? 'Série' : 'Filme');
+  const badge = $derived(item.media_type === "tv" ? "Série" : "Filme");
 </script>
 
 <button class="card" {onclick} type="button">
-
   <!-- Poster area -->
   <div class="card__poster">
-
     <!-- Shimmer skeleton while image loads -->
     {#if poster && !loaded && !errored}
       <div class="card__shimmer" aria-hidden="true"></div>
@@ -43,9 +41,16 @@
     <!-- No-poster fallback -->
     {#if !poster || errored}
       <div class="card__no-poster" aria-hidden="true">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="2" y="3" width="20" height="14" rx="2"/>
-          <path d="m8 21 4-4 4 4"/><path d="M10 9l4 4"/>
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <path d="m8 21 4-4 4 4" /><path d="M10 9l4 4" />
         </svg>
         <span>{item.title}</span>
       </div>
@@ -53,7 +58,6 @@
 
     <!-- Overlay: revealed on hover -->
     <div class="card__overlay" aria-hidden="true">
-
       <div class="card__overlay-top">
         <span class="card__type">{badge}</span>
         {#if rating}
@@ -70,13 +74,11 @@
           {#if year}<span>{year}</span>{/if}
           {#if item.vote_count > 0}
             <span>·</span>
-            <span>{item.vote_count.toLocaleString('pt-BR')} avaliações</span>
+            <span>{item.vote_count.toLocaleString("pt-BR")} avaliações</span>
           {/if}
         </div>
       </div>
-
     </div>
-
   </div>
 
   <!-- Static label below poster (always visible) -->
@@ -84,7 +86,6 @@
     <span class="card__label-title">{item.title}</span>
     {#if year}<span class="card__label-year">{year}</span>{/if}
   </div>
-
 </button>
 
 <style lang="scss">
@@ -116,17 +117,17 @@
     border: 1px solid rgba(255, 255, 255, 0.05);
     will-change: transform;
     transition:
-      transform    350ms $ease-out-expo,
-      box-shadow   350ms $ease-out-expo,
+      transform 350ms $ease-out-expo,
+      box-shadow 350ms $ease-out-expo,
       border-color 220ms ease;
 
     .card:hover & {
       transform: translateY(-8px) scale(1.04);
-      border-color: rgba(232, 184, 75, 0.4);
+      border-color: rgba($color-primary, 0.4);
       box-shadow:
         0 24px 64px rgba(0, 0, 0, 0.75),
-        0 0   0 1px rgba(232, 184, 75, 0.18),
-        0 0  40px rgba(232, 184, 75, 0.10);
+        0 0 0 1px rgba($color-primary, 0.18),
+        0 0 40px rgba($color-primary, 0.1);
     }
 
     .card:active & {
@@ -144,9 +145,13 @@
     object-fit: cover;
     display: block;
     opacity: 0;
-    transition: opacity 400ms ease, filter 350ms ease;
+    transition:
+      opacity 400ms ease,
+      filter 350ms ease;
 
-    &--loaded { opacity: 1; }
+    &--loaded {
+      opacity: 1;
+    }
 
     .card:hover & {
       filter: brightness(0.38) saturate(1.15);
@@ -159,11 +164,11 @@
     inset: 0;
     background: linear-gradient(
       100deg,
-      rgba(255, 255, 255, 0.00)  0%,
+      rgba(255, 255, 255, 0) 0%,
       rgba(255, 255, 255, 0.04) 40%,
       rgba(255, 255, 255, 0.08) 50%,
       rgba(255, 255, 255, 0.04) 60%,
-      rgba(255, 255, 255, 0.00) 100%
+      rgba(255, 255, 255, 0) 100%
     );
     background-size: 200% 100%;
     animation: shimmer 1.6s ease-in-out infinite;
@@ -179,7 +184,11 @@
     justify-content: center;
     gap: $spacing-sm;
     padding: $spacing-md;
-    background: linear-gradient(160deg, $color-bg-secondary 0%, $color-bg-primary 100%);
+    background: linear-gradient(
+      160deg,
+      $color-bg-secondary 0%,
+      $color-bg-primary 100%
+    );
     color: $color-text-faint;
 
     span {
@@ -192,7 +201,9 @@
       -webkit-box-orient: vertical;
     }
 
-    .card:hover & { filter: brightness(0.45); }
+    .card:hover & {
+      filter: brightness(0.45);
+    }
   }
 
   // ── Hover overlay ───────────────────────────────────────
@@ -209,13 +220,15 @@
     // Gradient: transparent top → dark bottom
     background: linear-gradient(
       to bottom,
-      rgba(0, 0, 0, 0.05)   0%,
-      rgba(0, 0, 0, 0)      25%,
-      rgba(0, 0, 0, 0)      40%,
+      rgba(0, 0, 0, 0.05) 0%,
+      rgba(0, 0, 0, 0) 25%,
+      rgba(0, 0, 0, 0) 40%,
       rgba(8, 11, 16, 0.94) 100%
     );
 
-    .card:hover & { opacity: 1; }
+    .card:hover & {
+      opacity: 1;
+    }
   }
 
   .card__overlay-top {
@@ -251,8 +264,8 @@
     font-size: 0.68rem;
     font-weight: 500;
     color: $color-primary;
-    background: rgba(232, 184, 75, 0.12);
-    border: 1px solid rgba(232, 184, 75, 0.28);
+    background: rgba($color-primary, 0.12);
+    border: 1px solid rgba($color-primary, 0.28);
     padding: 2px 7px;
     border-radius: $radius-sm;
     line-height: 1.7;
@@ -316,7 +329,9 @@
     flex: 1;
     transition: color 200ms ease;
 
-    .card:hover & { color: $color-text-main; }
+    .card:hover & {
+      color: $color-text-main;
+    }
   }
 
   .card__label-year {
@@ -328,7 +343,11 @@
 
   // ── Keyframes ───────────────────────────────────────────
   @keyframes shimmer {
-    0%   { background-position:  200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 </style>
