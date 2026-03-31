@@ -2,7 +2,6 @@
   import { onDestroy } from "svelte";
   import { ui } from "$lib/stores/ui.svelte";
 
-  const BUBBLE_COUNT = 20;
   let pulsing = $state(false);
   let pulseTimer: ReturnType<typeof setTimeout>;
 
@@ -23,13 +22,14 @@
 </script>
 
 <div class="bg-layer" aria-hidden="true">
-  <div class="bg-area" class:pulsing>
-    <ul class="circles">
-      {#each { length: BUBBLE_COUNT } as _}
-        <li></li>
-      {/each}
-    </ul>
+  <div class="bg-mesh" class:pulsing>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+    <div class="orb orb-5"></div>
   </div>
+  <div class="bg-noise"></div>
   <div class="bg-vignette"></div>
 </div>
 
@@ -40,237 +40,232 @@
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
+    background: $color-bg-primary;
   }
 
-  // ── Floating bubbles ──
-  .bg-area {
+  // ── Mesh gradient container ──
+  .bg-mesh {
     position: absolute;
     inset: 0;
-    background: $color-bg-primary;
+    filter: blur(100px) saturate(1.4);
+    opacity: 0.45;
+    transition:
+      opacity 0.3s ease-out,
+      filter 0.3s ease-out;
 
-    // Smooth radial red glows on solid black — blurred to eliminate banding
-    &::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(
-          ellipse 130% 90% at 15% 100%,
-          rgba($color-primary, 0.12) 0%,
-          rgba($color-primary, 0.06) 25%,
-          rgba($color-primary, 0.02) 45%,
-          transparent 70%
-        ),
-        radial-gradient(
-          ellipse 110% 80% at 85% 0%,
-          rgba($color-accent, 0.08) 0%,
-          rgba($color-accent, 0.03) 30%,
-          transparent 60%
-        );
-      filter: blur(40px);
+    &.pulsing {
+      opacity: 0.7;
+      filter: blur(70px) saturate(2);
     }
   }
 
-  .circles {
+  // ── Orbs — large drifting gradient blobs ──
+  .orb {
     position: absolute;
-    inset: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
+    border-radius: 50%;
+    will-change: transform;
   }
 
-  .circles li {
-    position: absolute;
-    display: block;
-    list-style: none;
-    width: 20px;
-    height: 20px;
-    background: rgba($color-primary, 0.1);
-    animation: float 18s linear infinite;
-    bottom: -160px;
+  .orb-1 {
+    width: 55vmax;
+    height: 55vmax;
+    top: -25%;
+    left: -20%;
+    background: radial-gradient(
+      circle,
+      rgba($color-primary, 0.6) 0%,
+      rgba($color-primary, 0.15) 40%,
+      transparent 65%
+    );
+    animation: drift-1 12s ease-in-out infinite;
   }
 
-  // ── 20 bubbles: varied sizes, positions, speeds ──
-  .circles li:nth-child(1) {
-    left: 5%;
-    width: 70px;
-    height: 70px;
-    animation-duration: 10s;
-    animation-delay: 0s;
-    background: rgba($color-primary, 0.1);
-  }
-  .circles li:nth-child(2) {
-    left: 15%;
-    width: 18px;
-    height: 18px;
-    animation-duration: 7s;
-    animation-delay: 1s;
-    background: rgba($color-accent, 0.14);
-  }
-  .circles li:nth-child(3) {
-    left: 25%;
-    width: 90px;
-    height: 90px;
-    animation-duration: 14s;
-    animation-delay: 0s;
-    background: rgba($color-primary, 0.07);
-  }
-  .circles li:nth-child(4) {
-    left: 35%;
-    width: 14px;
-    height: 14px;
-    animation-duration: 8s;
-    animation-delay: 2s;
-    background: rgba($color-primary, 0.16);
-  }
-  .circles li:nth-child(5) {
-    left: 42%;
-    width: 55px;
-    height: 55px;
-    animation-duration: 11s;
-    animation-delay: 0.5s;
-    background: rgba($color-accent, 0.09);
-  }
-  .circles li:nth-child(6) {
-    left: 52%;
-    width: 120px;
-    height: 120px;
-    animation-duration: 16s;
-    animation-delay: 3s;
-    background: rgba($color-primary, 0.05);
-  }
-  .circles li:nth-child(7) {
-    left: 60%;
-    width: 22px;
-    height: 22px;
-    animation-duration: 6s;
-    animation-delay: 1.5s;
-    background: rgba($color-primary, 0.14);
-  }
-  .circles li:nth-child(8) {
-    left: 70%;
-    width: 40px;
-    height: 40px;
-    animation-duration: 9s;
-    animation-delay: 0s;
-    background: rgba($color-accent, 0.11);
-  }
-  .circles li:nth-child(9) {
-    left: 80%;
-    width: 16px;
-    height: 16px;
-    animation-duration: 7s;
-    animation-delay: 4s;
-    background: rgba($color-primary, 0.18);
-  }
-  .circles li:nth-child(10) {
-    left: 90%;
-    width: 130px;
-    height: 130px;
-    animation-duration: 13s;
-    animation-delay: 0s;
-    background: rgba($color-primary, 0.04);
-  }
-  .circles li:nth-child(11) {
-    left: 2%;
-    width: 28px;
-    height: 28px;
-    animation-duration: 8s;
-    animation-delay: 2.5s;
-    background: rgba($color-accent, 0.12);
-  }
-  .circles li:nth-child(12) {
-    left: 18%;
-    width: 50px;
-    height: 50px;
-    animation-duration: 10s;
-    animation-delay: 1s;
-    background: rgba($color-primary, 0.08);
-  }
-  .circles li:nth-child(13) {
-    left: 30%;
-    width: 12px;
-    height: 12px;
-    animation-duration: 5s;
-    animation-delay: 0s;
-    background: rgba($color-primary, 0.2);
-  }
-  .circles li:nth-child(14) {
-    left: 48%;
-    width: 80px;
-    height: 80px;
-    animation-duration: 12s;
-    animation-delay: 3.5s;
-    background: rgba($color-accent, 0.06);
-  }
-  .circles li:nth-child(15) {
-    left: 55%;
-    width: 16px;
-    height: 16px;
-    animation-duration: 6s;
-    animation-delay: 0.8s;
-    background: rgba($color-primary, 0.16);
-  }
-  .circles li:nth-child(16) {
-    left: 65%;
-    width: 100px;
-    height: 100px;
-    animation-duration: 15s;
-    animation-delay: 2s;
-    background: rgba($color-primary, 0.05);
-  }
-  .circles li:nth-child(17) {
-    left: 75%;
-    width: 24px;
-    height: 24px;
-    animation-duration: 7s;
-    animation-delay: 1.2s;
-    background: rgba($color-accent, 0.13);
-  }
-  .circles li:nth-child(18) {
-    left: 85%;
-    width: 45px;
-    height: 45px;
-    animation-duration: 9s;
-    animation-delay: 0s;
-    background: rgba($color-primary, 0.09);
-  }
-  .circles li:nth-child(19) {
-    left: 10%;
-    width: 10px;
-    height: 10px;
-    animation-duration: 4s;
-    animation-delay: 0.3s;
-    background: rgba($color-primary, 0.22);
-  }
-  .circles li:nth-child(20) {
-    left: 95%;
-    width: 35px;
-    height: 35px;
-    animation-duration: 8s;
-    animation-delay: 5s;
-    background: rgba($color-accent, 0.1);
+  .orb-2 {
+    width: 45vmax;
+    height: 45vmax;
+    bottom: -15%;
+    right: -15%;
+    background: radial-gradient(
+      circle,
+      rgba($color-accent, 0.5) 0%,
+      rgba($color-accent, 0.12) 40%,
+      transparent 65%
+    );
+    animation: drift-2 15s ease-in-out infinite;
   }
 
-  // Pulse — flash bubbles brighter on card click
-  .bg-area.pulsing .circles li {
-    background: rgba($color-primary, 0.3);
-    transition: background 0.2s ease-out;
+  .orb-3 {
+    width: 38vmax;
+    height: 38vmax;
+    top: 35%;
+    left: 45%;
+    background: radial-gradient(
+      circle,
+      rgba($color-primary, 0.35) 0%,
+      rgba($color-primary, 0.08) 45%,
+      transparent 65%
+    );
+    animation: drift-3 10s ease-in-out infinite;
   }
 
-  @keyframes float {
-    0% {
-      transform: translateY(0) rotate(0deg);
-      opacity: 1;
-      border-radius: 0;
+  .orb-4 {
+    width: 32vmax;
+    height: 32vmax;
+    top: 5%;
+    right: 15%;
+    background: radial-gradient(
+      circle,
+      rgba($color-accent, 0.3) 0%,
+      rgba($color-primary, 0.06) 45%,
+      transparent 65%
+    );
+    animation: drift-4 13s ease-in-out infinite;
+  }
+
+  .orb-5 {
+    width: 40vmax;
+    height: 40vmax;
+    bottom: 10%;
+    left: 20%;
+    background: radial-gradient(
+      circle,
+      rgba($color-primary, 0.3) 0%,
+      rgba($color-primary, 0.06) 40%,
+      transparent 65%
+    );
+    animation: drift-5 11s ease-in-out infinite;
+  }
+
+  // ── Drift keyframes — wide, fast organic movement ──
+  @keyframes drift-1 {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    20% {
+      transform: translate(18vw, 12vh) scale(1.15);
+    }
+    40% {
+      transform: translate(-8vw, 25vh) scale(0.9);
+    }
+    60% {
+      transform: translate(15vw, -10vh) scale(1.1);
+    }
+    80% {
+      transform: translate(-12vw, 5vh) scale(0.95);
+    }
+  }
+
+  @keyframes drift-2 {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    20% {
+      transform: translate(-20vw, -10vh) scale(1.12);
+    }
+    40% {
+      transform: translate(12vw, -18vh) scale(0.88);
+    }
+    60% {
+      transform: translate(-8vw, 14vh) scale(1.08);
+    }
+    80% {
+      transform: translate(16vw, -4vh) scale(0.94);
+    }
+  }
+
+  @keyframes drift-3 {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    25% {
+      transform: translate(-22vw, 15vh) scale(1.2);
     }
     50% {
-      opacity: 0.6;
-      border-radius: 25%;
+      transform: translate(16vw, -12vh) scale(0.85);
     }
+    75% {
+      transform: translate(-10vw, -8vh) scale(1.1);
+    }
+  }
+
+  @keyframes drift-4 {
+    0%,
     100% {
-      transform: translateY(-110vh) rotate(540deg);
-      opacity: 0;
-      border-radius: 50%;
+      transform: translate(0, 0) scale(1);
+    }
+    20% {
+      transform: translate(15vw, 18vh) scale(1.1);
+    }
+    50% {
+      transform: translate(-18vw, -14vh) scale(0.9);
+    }
+    80% {
+      transform: translate(10vw, 8vh) scale(1.05);
+    }
+  }
+
+  @keyframes drift-5 {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    30% {
+      transform: translate(20vw, -15vh) scale(1.15);
+    }
+    60% {
+      transform: translate(-14vw, 20vh) scale(0.88);
+    }
+    85% {
+      transform: translate(8vw, -6vh) scale(1.06);
+    }
+  }
+
+  // ── Film grain noise ──
+  .bg-noise {
+    position: absolute;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    animation: grain 8s steps(10) infinite;
+    opacity: 0.5;
+    z-index: 2;
+  }
+
+  @keyframes grain {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    10% {
+      transform: translate(-5%, -10%);
+    }
+    20% {
+      transform: translate(-15%, 5%);
+    }
+    30% {
+      transform: translate(7%, -25%);
+    }
+    40% {
+      transform: translate(-5%, 25%);
+    }
+    50% {
+      transform: translate(-15%, 10%);
+    }
+    60% {
+      transform: translate(15%, 0%);
+    }
+    70% {
+      transform: translate(0%, 15%);
+    }
+    80% {
+      transform: translate(3%, 25%);
+    }
+    90% {
+      transform: translate(-10%, 10%);
     }
   }
 
@@ -280,10 +275,10 @@
     inset: 0;
     background: radial-gradient(
       ellipse 100% 100% at 50% 50%,
-      transparent 25%,
-      rgba($color-bg-primary, 0.4) 55%,
-      rgba($color-bg-primary, 0.8) 100%
+      transparent 30%,
+      rgba($color-bg-primary, 0.5) 60%,
+      rgba($color-bg-primary, 0.85) 100%
     );
-    z-index: 1;
+    z-index: 3;
   }
 </style>
