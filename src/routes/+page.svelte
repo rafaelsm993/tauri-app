@@ -2,10 +2,14 @@
   import { onMount, onDestroy } from "svelte";
   import { goto } from "$app/navigation";
   import { TmdbAPI } from "$lib/api/tmdb";
-  import type { MediaItem, PaginatedResult } from "$lib/types/media";
+  import { JikanAPI } from "$lib/api/jikan";
+  import { OpenLibraryAPI } from "$lib/api/openlib";
+  import type { MediaItem, MediaType, PaginatedResult } from "$lib/types/media";
   import MediaCard from "$lib/components/media/MediaCard.svelte";
   import SearchBar from "$lib/components/ui/SearchBar.svelte";
+  import CategoryTabs from "$lib/components/ui/CategoryTabs.svelte";
 
+  let activeCategory = $state<MediaType>('movie');
   let items = $state<MediaItem[]>([]);
   let query = $state("");
   let page = $state(1);
@@ -21,10 +25,22 @@
   let observer: IntersectionObserver;
 
   async function fetchPage(
+    cat: MediaType,
     q: string,
     p: number,
   ): Promise<PaginatedResult<MediaItem>> {
-    return q.trim() ? TmdbAPI.searchMovies(q, p) : TmdbAPI.discoverMovies(p);
+    switch (cat) {
+      case 'movie':
+        return q.trim() ? TmdbAPI.searchMovies(q, p) : TmdbAPI.discoverMovies(p);
+      case 'tv':
+        return q.trim() ? TmdbAPI.searchSeries(q, p) : TmdbAPI.discoverSeries(p);
+      case 'anime':
+        return JikanAPI.searchAnime(q.trim() || 'popular', p);
+      case 'manga':
+        return JikanAPI.searchManga(q.trim() || 'popular', p);
+      case 'book':
+        return OpenLibraryAPI.searchBooks(q.trim() || 'popular', p);
+    }
   }
 
   async function load(newQuery = "") {
@@ -36,7 +52,7 @@
     error = "";
     loading = true;
     try {
-      const res = await fetchPage(newQuery, 1);
+      const res = await fetchPage(activeCategory, newQuery, 1);
       items = res.results;
       totalPages = res.total_pages ?? 1;
     } catch (e: any) {
@@ -52,7 +68,7 @@
     appending = true;
     try {
       const next = page + 1;
-      const res = await fetchPage(query, next);
+      const res = await fetchPage(activeCategory, query, next);
       items = [...items, ...res.results];
       page = next;
     } catch (e: any) {
@@ -60,6 +76,23 @@
         typeof e === "string" ? e : (e?.message ?? "Erro ao carregar mais.");
     } finally {
       appending = false;
+    }
+  }
+
+  function switchCategory(cat: MediaType) {
+    if (cat === activeCategory && !loading) return;
+    activeCategory = cat;
+    load(query);
+  }
+
+  function handleCardClick(item: MediaItem) {
+    const type = item.media_type;
+    const id = item.id;
+    // Books use string keys like "/works/OL27448W" — encode for URL
+    if (type === 'book') {
+      goto(`/media/book/${encodeURIComponent(String(id))}`);
+    } else {
+      goto(`/media/${type}/${id}`);
     }
   }
 
@@ -96,8 +129,11 @@
   <header class="page-header">
     <SearchBar
       onSearch={(q) => load(q)}
-      placeholder="Buscar filmes, séries, anime…"
+      placeholder="Buscar filmes, séries, anime, mangá, livros…"
     />
+
+    <CategoryTabs active={activeCategory} onchange={switchCategory} />
+
     {#if !loading}
       <p class="page-context">
         {#if isSearch}
@@ -127,8 +163,8 @@
     <p class="page-empty">Nenhum resultado encontrado.</p>
   {:else}
     <div class="grid">
-      {#each items as item (item.id)}
-        <MediaCard {item} onclick={() => goto(`/media/${item.media_type}/${item.id}`)} />
+      {#each items as item, i (`${item.media_type}-${item.id}-${i}`)}
+        <MediaCard {item} onclick={() => handleCardClick(item)} />
       {/each}
       {#if appending}
         {#each { length: 8 } as _}

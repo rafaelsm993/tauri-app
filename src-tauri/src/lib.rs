@@ -21,6 +21,8 @@ pub fn run() {
             // ── Jikan / OpenLibrary ──
             api::jikan::search_anime,
             api::jikan::anime_details,
+            api::jikan::search_manga,
+            api::jikan::manga_details,
             api::openlib::search_books,
             api::openlib::book_details
         ])

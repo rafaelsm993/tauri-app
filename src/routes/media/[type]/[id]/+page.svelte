@@ -3,6 +3,8 @@
   import { goto } from "$app/navigation";
   import { onDestroy } from "svelte";
   import { TmdbAPI } from "$lib/api/tmdb";
+  import { JikanAPI } from "$lib/api/jikan";
+  import { OpenLibraryAPI } from "$lib/api/openlib";
   import type { MediaDetail } from "$lib/types/media";
   import { TMDB_IMG } from "$lib/types/media";
   import { ui } from "$lib/stores/ui.svelte";
@@ -56,29 +58,58 @@
       : "",
   );
 
+  // For TMDB items, build URLs; for Jikan/OL the full URL is already in the field
+  const isTmdb = $derived(detail?.media_type === 'movie' || detail?.media_type === 'tv');
+  const posterUrl = $derived(
+    detail?.poster_path
+      ? (isTmdb ? TMDB_IMG.poster(detail.poster_path, "w500") : detail.poster_path)
+      : null,
+  );
+  const backdropUrl = $derived(
+    detail?.backdrop_path
+      ? (isTmdb ? TMDB_IMG.backdrop(detail.backdrop_path, "w1280") : detail.backdrop_path)
+      : null,
+  );
+
   async function fetchDetail(type: string, id: string) {
     loading = true;
     error = "";
     detail = null;
 
-    if (type !== "movie" && type !== "tv") {
-      error = "Tipo de mídia inválido.";
-      loading = false;
-      return;
-    }
-
-    const numId = parseInt(id, 10);
-    if (isNaN(numId)) {
-      error = "ID inválido.";
-      loading = false;
-      return;
-    }
-
     try {
-      detail =
-        type === "movie"
-          ? await TmdbAPI.movieDetails(numId)
-          : await TmdbAPI.seriesDetails(numId);
+      switch (type) {
+        case 'movie': {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) { error = "ID inválido."; break; }
+          detail = await TmdbAPI.movieDetails(numId);
+          break;
+        }
+        case 'tv': {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) { error = "ID inválido."; break; }
+          detail = await TmdbAPI.seriesDetails(numId);
+          break;
+        }
+        case 'anime': {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) { error = "ID inválido."; break; }
+          detail = await JikanAPI.animeDetails(numId);
+          break;
+        }
+        case 'manga': {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) { error = "ID inválido."; break; }
+          detail = await JikanAPI.mangaDetails(numId);
+          break;
+        }
+        case 'book': {
+          const key = decodeURIComponent(id);
+          detail = await OpenLibraryAPI.bookDetails(key);
+          break;
+        }
+        default:
+          error = "Tipo de mídia inválido.";
+      }
     } catch (e: any) {
       error =
         typeof e === "string"
@@ -135,9 +166,9 @@
 {:else if detail}
   <!-- Hero backdrop -->
   <div class="hero">
-    {#if detail.backdrop_path}
+    {#if backdropUrl}
       <img
-        src={TMDB_IMG.backdrop(detail.backdrop_path, "w1280")}
+        src={backdropUrl}
         alt=""
         class="hero-img"
       />
@@ -155,9 +186,9 @@
   <!-- Main content -->
   <div class="detail-body">
     <aside class="detail-poster">
-      {#if detail.poster_path}
+      {#if posterUrl}
         <img
-          src={TMDB_IMG.poster(detail.poster_path, "w500")}
+          src={posterUrl}
           alt={detail.title}
           class="poster-img"
         />
@@ -178,7 +209,27 @@
         {#if runtimeStr}
           <span class="meta-badge">{runtimeStr}</span>
         {/if}
+        {#if detail.episodes}
+          <span class="meta-badge">{detail.episodes} episódios</span>
+        {/if}
+        {#if detail.chapters}
+          <span class="meta-badge">{detail.chapters} capítulos</span>
+        {/if}
+        {#if detail.volumes}
+          <span class="meta-badge">{detail.volumes} volumes</span>
+        {/if}
+        {#if detail.status}
+          <span class="meta-badge">{detail.status}</span>
+        {/if}
       </div>
+
+      <!-- Studios / Author -->
+      {#if detail.studios && detail.studios.length > 0}
+        <p class="detail-studios">{detail.studios.join(', ')}</p>
+      {/if}
+      {#if detail.author}
+        <p class="detail-author">{detail.author}</p>
+      {/if}
 
       <!-- Genres -->
       {#if detail.genres.length > 0}
@@ -228,7 +279,7 @@
               <div class="cast-card">
                 {#if member.profile_path}
                   <img
-                    src={TMDB_IMG.profile(member.profile_path)}
+                    src={isTmdb ? TMDB_IMG.profile(member.profile_path) : member.profile_path}
                     alt={member.name}
                     class="cast-photo"
                     loading="lazy"
@@ -361,6 +412,14 @@
     display: flex;
     gap: $spacing-sm;
     flex-wrap: wrap;
+    margin-bottom: $spacing-md;
+  }
+
+  .detail-studios,
+  .detail-author {
+    font-size: 0.82rem;
+    color: $color-text-muted;
+    font-style: italic;
     margin-bottom: $spacing-md;
   }
 

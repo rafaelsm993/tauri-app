@@ -1,6 +1,11 @@
 <script lang="ts">
-  import type { MediaItem } from "$lib/types/media";
-  import { TMDB_IMG, getYear, getRating } from "$lib/types/media";
+  import type { MediaItem, MediaType } from "$lib/types/media";
+  import {
+    getPosterUrl,
+    getYear,
+    getRating,
+    MEDIA_LABELS,
+  } from "$lib/types/media";
 
   let { item, onclick } = $props<{
     item: MediaItem;
@@ -11,10 +16,10 @@
   let errored = $state(false);
 
   // $derived ensures these re-evaluate if item prop changes
-  const poster = $derived(TMDB_IMG.poster(item.poster_path, "w342"));
+  const poster = $derived(getPosterUrl(item));
   const year = $derived(getYear(item));
   const rating = $derived(getRating(item));
-  const badge = $derived(item.media_type === "tv" ? "Série" : "Filme");
+  const badge = $derived(MEDIA_LABELS[item.media_type as MediaType] ?? 'Mídia');
 </script>
 
 <button class="card" {onclick} type="button">
@@ -67,11 +72,22 @@
 
       <div class="card__overlay-body">
         <p class="card__overlay-title">{item.title}</p>
+        {#if item.author}
+          <p class="card__author">{item.author}</p>
+        {/if}
         {#if item.overview}
           <p class="card__overview">{item.overview}</p>
         {/if}
         <div class="card__meta">
           {#if year}<span>{year}</span>{/if}
+          {#if item.episodes}
+            <span>·</span>
+            <span>{item.episodes} eps</span>
+          {/if}
+          {#if item.chapters}
+            <span>·</span>
+            <span>{item.chapters} caps</span>
+          {/if}
           {#if item.vote_count > 0}
             <span>·</span>
             <span>{item.vote_count.toLocaleString("pt-BR")} avaliações</span>
@@ -294,6 +310,14 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .card__author {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.45);
+    font-style: italic;
+    margin: 0;
+    @include truncate;
   }
 
   .card__meta {
