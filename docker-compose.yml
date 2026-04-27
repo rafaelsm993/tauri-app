@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tauriflix-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tauriflix}
+    ports:
+      - "5432:5432"
+    volumes:
+      - tauriflix_pgdata:/var/lib/postgresql/data
+
+volumes:
+  tauriflix_pgdata:
