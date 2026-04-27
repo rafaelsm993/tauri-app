@@ -63,8 +63,8 @@ export const TMDB_IMG = {
 // ── Auth ────────────────────────────────────────────────────
 export interface User {
   id: string;
-  username: string;
-}
+  username: string;  email?: string;
+  avatar_url?: string;}
 
 // ── Watchlist ───────────────────────────────────────────────
 export type WatchlistStatus = 'want' | 'watching' | 'watched';

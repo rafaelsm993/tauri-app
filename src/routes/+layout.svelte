@@ -41,7 +41,16 @@
     </div>
     <div class="navbar-user">
       <span class="navbar-username">
-        <span class="navbar-avatar">{userStore.currentUser?.username[0].toUpperCase()}</span>
+        {#if userStore.currentUser?.avatar_url}
+          <img
+            src={userStore.currentUser.avatar_url}
+            alt="Avatar"
+            class="navbar-avatar navbar-avatar--img"
+            referrerpolicy="no-referrer"
+          />
+        {:else}
+          <span class="navbar-avatar">{userStore.currentUser?.username[0].toUpperCase()}</span>
+        {/if}
         {userStore.currentUser?.username}
       </span>
       <button class="navbar-logout" onclick={handleLogout}>Sair</button>
@@ -160,6 +169,12 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+
+    &--img {
+      background: transparent;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
   }
 
   .navbar-logout {

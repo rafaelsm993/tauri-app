@@ -32,6 +32,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(pool)
+        .manage(api::google_auth::GoogleAuthCancel::new())
         .invoke_handler(tauri::generate_handler![
             greet,
             // ── TMDB ──
@@ -50,6 +51,10 @@ pub fn run() {
             api::auth::register_user,
             api::auth::login_user,
             api::auth::list_users,
+            // ── Google OAuth ──
+            api::google_auth::google_login,
+            api::google_auth::cancel_google_login,
+            api::google_auth::complete_google_registration,
             // ── Watchlist persistence ──
             api::store::load_watchlist,
             api::store::save_watchlist
