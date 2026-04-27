@@ -6,6 +6,7 @@
   import type { MediaDetail } from "$lib/types/media";
   import { TMDB_IMG } from "$lib/types/media";
   import { ui } from "$lib/stores/ui.svelte";
+  import WatchlistButton from "$lib/components/ui/WatchlistButton.svelte";
 
   let detail = $state<MediaDetail | null>(null);
   let loading = $state(true);
@@ -188,6 +189,11 @@
           {/each}
         </div>
       {/if}
+
+      <!-- Watchlist action -->
+      <div class="watchlist-action">
+        <WatchlistButton item={detail} />
+      </div>
 
       <!-- Overview -->
       {#if detail.overview}
@@ -385,7 +391,7 @@
     display: flex;
     gap: $spacing-xs;
     flex-wrap: wrap;
-    margin-bottom: $spacing-lg;
+    margin-bottom: $spacing-md;
   }
 
   .genre-pill {
@@ -398,6 +404,11 @@
     font-family: $font-mono;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+  }
+
+  // ── Watchlist action ───────────────────────────────────
+  .watchlist-action {
+    margin-bottom: $spacing-lg;
   }
 
   // ── Overview ────────────────────────────────────────────

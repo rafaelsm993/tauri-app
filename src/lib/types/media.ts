@@ -60,6 +60,20 @@ export const TMDB_IMG = {
     path ? `${TMDB_BASE}/${size}${path}` : null,
 } as const;
 
+// ── Auth ────────────────────────────────────────────────────
+export interface User {
+  id: string;
+  username: string;  email?: string;
+  avatar_url?: string;}
+
+// ── Watchlist ───────────────────────────────────────────────
+export type WatchlistStatus = 'want' | 'watching' | 'watched';
+
+export interface WatchlistItem extends MediaItem {
+  status: WatchlistStatus;
+  addedAt: string; // ISO date string
+}
+
 // ── Derived display helpers ─────────────────────────────────
 export const getYear = (item: MediaItem): string => {
   const d = item.release_date ?? item.first_air_date;

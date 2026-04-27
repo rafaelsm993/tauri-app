@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { MediaItem } from "$lib/types/media";
   import { TMDB_IMG, getYear, getRating } from "$lib/types/media";
+  import WatchlistButton from "$lib/components/ui/WatchlistButton.svelte";
 
   let { item, onclick } = $props<{
     item: MediaItem;
@@ -78,6 +79,12 @@
           {/if}
         </div>
       </div>
+    </div>
+
+    <!-- WatchlistButton: outside aria-hidden overlay, shown on hover -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="card__wl-action" onclick={(e) => e.stopPropagation()}>
+      <WatchlistButton {item} compact />
     </div>
   </div>
 
@@ -348,6 +355,20 @@
     }
     100% {
       background-position: -200% 0;
+    }
+  }
+
+  // ── WatchlistButton container ────────────────────────────
+  .card__wl-action {
+    position: absolute;
+    bottom: $spacing-sm;
+    right: $spacing-sm;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity $dur-normal $ease-out-expo;
+
+    .card:hover & {
+      opacity: 1;
     }
   }
 </style>
