@@ -2,11 +2,10 @@
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { onDestroy } from "svelte";
-  import { TmdbAPI } from "$lib/api/tmdb";
+  import { TvmazeAPI } from "$lib/api/tvmaze";
   import { JikanAPI } from "$lib/api/jikan";
   import { OpenLibraryAPI } from "$lib/api/openlib";
   import type { MediaDetail } from "$lib/types/media";
-  import { TMDB_IMG } from "$lib/types/media";
   import { ui } from "$lib/stores/ui.svelte";
 
   let detail = $state<MediaDetail | null>(null);
@@ -58,18 +57,10 @@
       : "",
   );
 
-  // For TMDB items, build URLs; for Jikan/OL the full URL is already in the field
-  const isTmdb = $derived(detail?.media_type === 'movie' || detail?.media_type === 'tv');
-  const posterUrl = $derived(
-    detail?.poster_path
-      ? (isTmdb ? TMDB_IMG.poster(detail.poster_path, "w500") : detail.poster_path)
-      : null,
-  );
-  const backdropUrl = $derived(
-    detail?.backdrop_path
-      ? (isTmdb ? TMDB_IMG.backdrop(detail.backdrop_path, "w1280") : detail.backdrop_path)
-      : null,
-  );
+  // All providers (TVmaze, Jikan, OpenLibrary) now return absolute image URLs
+  // in poster_path / backdrop_path — no path prefixing required.
+  const posterUrl = $derived(detail?.poster_path ?? null);
+  const backdropUrl = $derived(detail?.backdrop_path ?? null);
 
   async function fetchDetail(type: string, id: string) {
     loading = true;
@@ -78,31 +69,34 @@
 
     try {
       switch (type) {
-        case 'movie': {
+        case "tv": {
           const numId = parseInt(id, 10);
-          if (isNaN(numId)) { error = "ID inválido."; break; }
-          detail = await TmdbAPI.movieDetails(numId);
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
+          detail = await TvmazeAPI.showDetails(numId);
           break;
         }
-        case 'tv': {
+        case "anime": {
           const numId = parseInt(id, 10);
-          if (isNaN(numId)) { error = "ID inválido."; break; }
-          detail = await TmdbAPI.seriesDetails(numId);
-          break;
-        }
-        case 'anime': {
-          const numId = parseInt(id, 10);
-          if (isNaN(numId)) { error = "ID inválido."; break; }
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
           detail = await JikanAPI.animeDetails(numId);
           break;
         }
-        case 'manga': {
+        case "manga": {
           const numId = parseInt(id, 10);
-          if (isNaN(numId)) { error = "ID inválido."; break; }
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
           detail = await JikanAPI.mangaDetails(numId);
           break;
         }
-        case 'book': {
+        case "book": {
           const key = decodeURIComponent(id);
           detail = await OpenLibraryAPI.bookDetails(key);
           break;
@@ -167,11 +161,7 @@
   <!-- Hero backdrop -->
   <div class="hero">
     {#if backdropUrl}
-      <img
-        src={backdropUrl}
-        alt=""
-        class="hero-img"
-      />
+      <img src={backdropUrl} alt="" class="hero-img" />
     {/if}
     <div class="hero-fade"></div>
     <div class="hero-content">
@@ -187,11 +177,7 @@
   <div class="detail-body">
     <aside class="detail-poster">
       {#if posterUrl}
-        <img
-          src={posterUrl}
-          alt={detail.title}
-          class="poster-img"
-        />
+        <img src={posterUrl} alt={detail.title} class="poster-img" />
       {:else}
         <div class="poster-placeholder">Sem poster</div>
       {/if}
@@ -225,7 +211,7 @@
 
       <!-- Studios / Author -->
       {#if detail.studios && detail.studios.length > 0}
-        <p class="detail-studios">{detail.studios.join(', ')}</p>
+        <p class="detail-studios">{detail.studios.join(", ")}</p>
       {/if}
       {#if detail.author}
         <p class="detail-author">{detail.author}</p>
@@ -279,7 +265,7 @@
               <div class="cast-card">
                 {#if member.profile_path}
                   <img
-                    src={isTmdb ? TMDB_IMG.profile(member.profile_path) : member.profile_path}
+                    src={member.profile_path}
                     alt={member.name}
                     class="cast-photo"
                     loading="lazy"

@@ -11,13 +11,10 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             greet,
-            // ── TMDB ──
-            api::tmdb::search_movies,
-            api::tmdb::search_series,
-            api::tmdb::discover_movies,   // was missing!
-            api::tmdb::discover_series,   // was missing!
-            api::tmdb::movie_details,
-            api::tmdb::series_details,
+            // ── TVmaze ──
+            api::tvmaze::tvmaze_search_shows,
+            api::tvmaze::tvmaze_discover_shows,
+            api::tvmaze::tvmaze_show_details,
             // ── Jikan / OpenLibrary ──
             api::jikan::search_anime,
             api::jikan::anime_details,

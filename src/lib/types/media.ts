@@ -81,13 +81,14 @@ export const OL_IMG = {
 } as const;
 
 // ── Unified poster URL helper ───────────────────────────────
-// For TMDB items poster_path is a relative path; for Jikan/OL it's already a full URL.
+// All current providers (TVmaze, Jikan, OpenLibrary) store absolute URLs in
+// poster_path. The TMDB_IMG helper above is kept only for legacy callers
+// that still hold a relative TMDB path.
 export function getPosterUrl(item: MediaItem): string | null {
   if (!item.poster_path) return null;
-  if (item.media_type === 'movie' || item.media_type === 'tv') {
+  if (item.media_type === 'movie') {
     return TMDB_IMG.poster(item.poster_path);
   }
-  // Jikan and OpenLibrary store the full URL directly
   return item.poster_path;
 }
 

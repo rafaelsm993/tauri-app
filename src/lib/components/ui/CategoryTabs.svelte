@@ -4,7 +4,6 @@
   type Category = { key: MediaType; label: string };
 
   const CATEGORIES: Category[] = [
-    { key: "movie", label: "Filmes" },
     { key: "tv", label: "Séries" },
     { key: "anime", label: "Anime" },
     { key: "manga", label: "Mangá" },

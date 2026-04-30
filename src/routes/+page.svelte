@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { goto } from "$app/navigation";
-  import { TmdbAPI } from "$lib/api/tmdb";
+  import { TvmazeAPI } from "$lib/api/tvmaze";
   import { JikanAPI } from "$lib/api/jikan";
   import { OpenLibraryAPI } from "$lib/api/openlib";
   import type { MediaItem, MediaType, PaginatedResult } from "$lib/types/media";
@@ -9,7 +9,7 @@
   import SearchBar from "$lib/components/ui/SearchBar.svelte";
   import CategoryTabs from "$lib/components/ui/CategoryTabs.svelte";
 
-  let activeCategory = $state<MediaType>('movie');
+  let activeCategory = $state<MediaType>("tv");
   let items = $state<MediaItem[]>([]);
   let query = $state("");
   let page = $state(1);
@@ -30,16 +30,18 @@
     p: number,
   ): Promise<PaginatedResult<MediaItem>> {
     switch (cat) {
-      case 'movie':
-        return q.trim() ? TmdbAPI.searchMovies(q, p) : TmdbAPI.discoverMovies(p);
-      case 'tv':
-        return q.trim() ? TmdbAPI.searchSeries(q, p) : TmdbAPI.discoverSeries(p);
-      case 'anime':
-        return JikanAPI.searchAnime(q.trim() || 'popular', p);
-      case 'manga':
-        return JikanAPI.searchManga(q.trim() || 'popular', p);
-      case 'book':
-        return OpenLibraryAPI.searchBooks(q.trim() || 'popular', p);
+      case "tv":
+        return q.trim()
+          ? TvmazeAPI.searchShows(q, p)
+          : TvmazeAPI.discoverShows(p);
+      case "anime":
+        return JikanAPI.searchAnime(q.trim() || "popular", p);
+      case "manga":
+        return JikanAPI.searchManga(q.trim() || "popular", p);
+      case "book":
+        return OpenLibraryAPI.searchBooks(q.trim() || "popular", p);
+      default:
+        return { results: [], page: 1, total_pages: 1, total_results: 0 };
     }
   }
 
@@ -89,7 +91,7 @@
     const type = item.media_type;
     const id = item.id;
     // Books use string keys like "/works/OL27448W" — encode for URL
-    if (type === 'book') {
+    if (type === "book") {
       goto(`/media/book/${encodeURIComponent(String(id))}`);
     } else {
       goto(`/media/${type}/${id}`);
