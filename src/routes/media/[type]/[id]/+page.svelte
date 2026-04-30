@@ -2,9 +2,10 @@
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { onDestroy } from "svelte";
-  import { TvmazeAPI } from "$lib/api/tvmaze";
-  import { JikanAPI } from "$lib/api/jikan";
-  import { OpenLibraryAPI } from "$lib/api/openlib";
+  import { TmdbAPI } from "$lib/api/tmdb";
+  import { AnilistAPI } from "$lib/api/anilist";
+  import { ITunesAPI } from "$lib/api/itunes";
+  import { RawgAPI } from "$lib/api/rawg";
   import type { MediaDetail } from "$lib/types/media";
   import { ui } from "$lib/stores/ui.svelte";
 
@@ -53,9 +54,19 @@
   );
   const runtimeStr = $derived(
     detail?.runtime
-      ? `${Math.floor(detail.runtime / 60)}h ${detail.runtime % 60}m`
+      ? detail.media_type === "book"
+        ? `${detail.runtime} páginas`
+        : `${Math.floor(detail.runtime / 60)}h ${detail.runtime % 60}m`
       : "",
   );
+
+  // Build initials (max 2 chars) from a person's name for avatar fallbacks.
+  function initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
 
   // All providers (TVmaze, Jikan, OpenLibrary) now return absolute image URLs
   // in poster_path / backdrop_path — no path prefixing required.
@@ -69,13 +80,22 @@
 
     try {
       switch (type) {
+        case "movie": {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
+          detail = await TmdbAPI.movieDetails(numId);
+          break;
+        }
         case "tv": {
           const numId = parseInt(id, 10);
           if (isNaN(numId)) {
             error = "ID inválido.";
             break;
           }
-          detail = await TvmazeAPI.showDetails(numId);
+          detail = await TmdbAPI.tvDetails(numId);
           break;
         }
         case "anime": {
@@ -84,7 +104,7 @@
             error = "ID inválido.";
             break;
           }
-          detail = await JikanAPI.animeDetails(numId);
+          detail = await AnilistAPI.animeDetails(numId);
           break;
         }
         case "manga": {
@@ -93,12 +113,21 @@
             error = "ID inválido.";
             break;
           }
-          detail = await JikanAPI.mangaDetails(numId);
+          detail = await AnilistAPI.mangaDetails(numId);
           break;
         }
         case "book": {
-          const key = decodeURIComponent(id);
-          detail = await OpenLibraryAPI.bookDetails(key);
+          const volumeId = decodeURIComponent(id);
+          detail = await ITunesAPI.bookDetails(volumeId);
+          break;
+        }
+        case "game": {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
+          detail = await RawgAPI.gameDetails(numId);
           break;
         }
         default:
@@ -207,10 +236,20 @@
         {#if detail.status}
           <span class="meta-badge">{detail.status}</span>
         {/if}
+        {#if detail.platforms && detail.platforms.length > 0}
+          {#each detail.platforms as p (p)}
+            <span class="meta-badge">{p}</span>
+          {/each}
+        {/if}
       </div>
 
-      <!-- Studios / Author -->
-      {#if detail.studios && detail.studios.length > 0}
+      <!-- Studios / Author / Developer -->
+      {#if detail.developer}
+        <p class="detail-studios">
+          {detail.developer}{#if detail.publisher && detail.publisher !== detail.developer}
+            ·  {detail.publisher}{/if}
+        </p>
+      {:else if detail.studios && detail.studios.length > 0}
         <p class="detail-studios">{detail.studios.join(", ")}</p>
       {/if}
       {#if detail.author}
@@ -247,6 +286,18 @@
         </div>
       {/if}
 
+      <!-- Screenshots (games) -->
+      {#if detail.screenshots && detail.screenshots.length > 0}
+        <div class="shots-section">
+          <h3 class="section-title">Capturas</h3>
+          <div class="shots-scroll">
+            {#each detail.screenshots as src (src)}
+              <img {src} alt="" class="shot-img" loading="lazy" />
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       <!-- Cast -->
       {#if detail.cast.length > 0}
         <div class="cast-section">
@@ -271,7 +322,9 @@
                     loading="lazy"
                   />
                 {:else}
-                  <div class="cast-photo-placeholder"></div>
+                  <div class="cast-photo-placeholder" aria-hidden="true">
+                    {initials(member.name)}
+                  </div>
                 {/if}
                 <span class="cast-name">{member.name}</span>
                 <span class="cast-character">{member.character}</span>
@@ -488,6 +541,36 @@
     margin-bottom: $spacing-xl;
   }
 
+  // ── Screenshots (games) ─────────────────────────────────
+  .shots-section {
+    margin-bottom: $spacing-xl;
+  }
+
+  .shots-scroll {
+    display: flex;
+    gap: $spacing-md;
+    overflow-x: auto;
+    padding-bottom: $spacing-sm;
+
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+  }
+
+  .shot-img {
+    flex: 0 0 auto;
+    height: 220px;
+    width: auto;
+    border-radius: $radius-md;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: $color-bg-secondary;
+    object-fit: cover;
+  }
+
   // ── Cast ────────────────────────────────────────────────
   .cast-section {
     margin-bottom: $spacing-xl;
@@ -536,7 +619,20 @@
     width: 72px;
     height: 72px;
     border-radius: 50%;
-    background: $color-bg-secondary;
+    background: linear-gradient(
+      135deg,
+      rgba($color-primary, 0.18),
+      rgba($color-accent, 0.18)
+    );
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-text-main;
+    font-family: $font-display;
+    font-size: 1.2rem;
+    letter-spacing: 0.04em;
+    user-select: none;
   }
 
   .cast-name {

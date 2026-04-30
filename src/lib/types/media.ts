@@ -3,7 +3,7 @@
 // Designed to be reused by TMDB, Jikan (anime/manga) and OpenLibrary.
 // ================================================================
 
-export type MediaType = 'movie' | 'tv' | 'anime' | 'manga' | 'book';
+export type MediaType = 'movie' | 'tv' | 'anime' | 'manga' | 'book' | 'game';
 
 // Generic paginated envelope — mirrors TMDB, Jikan, etc.
 export interface PaginatedResult<T> {
@@ -30,6 +30,7 @@ export interface MediaItem {
   author?:       string;           // books
   episodes?:     number | null;    // anime
   chapters?:     number | null;    // manga
+  developer?:    string;           // games
 }
 
 // ── Detail sub-types ────────────────────────────────────────
@@ -60,6 +61,10 @@ export interface MediaDetail {
   status?:       string;
   studios?:      string[];
   subjects?:     string[];
+  developer?:    string;
+  publisher?:    string;
+  platforms?:    string[];
+  screenshots?:  string[];
 }
 
 // ── TMDB image URL builder ──────────────────────────────────
@@ -81,15 +86,11 @@ export const OL_IMG = {
 } as const;
 
 // ── Unified poster URL helper ───────────────────────────────
-// All current providers (TVmaze, Jikan, OpenLibrary) store absolute URLs in
-// poster_path. The TMDB_IMG helper above is kept only for legacy callers
+// All current providers (Cinemeta, Jikan, OpenLibrary) store absolute URLs
+// in poster_path. The TMDB_IMG helper above is kept only for legacy callers
 // that still hold a relative TMDB path.
 export function getPosterUrl(item: MediaItem): string | null {
-  if (!item.poster_path) return null;
-  if (item.media_type === 'movie') {
-    return TMDB_IMG.poster(item.poster_path);
-  }
-  return item.poster_path;
+  return item.poster_path ?? null;
 }
 
 // ── Derived display helpers ─────────────────────────────────
@@ -107,4 +108,17 @@ export const MEDIA_LABELS: Record<MediaType, string> = {
   anime: 'Anime',
   manga: 'Mangá',
   book: 'Livro',
+  game: 'Jogo',
 };
+
+// ── Genre filter ─────────────────────────────────────────────
+// Categories that support server-side genre filtering. Books use a curated
+// hardcoded list (Apple Books category IDs) since iTunes has no public
+// genre-list endpoint, but the filter is still surfaced in the UI.
+export const GENRE_SUPPORTED: ReadonlySet<MediaType> = new Set<MediaType>([
+  'movie', 'tv', 'anime', 'manga', 'book', 'game',
+]);
+
+// Genre id is numeric for TMDB/Jikan, string slug for RAWG.
+export type GenreId = number | string;
+export interface GenreOption { id: GenreId; name: string; }

@@ -33,17 +33,29 @@
   <div class="bg-vignette"></div>
 </div>
 
-<style lang="scss">
+<!--
+  NOTE: This component intentionally uses plain CSS (no `lang="scss"`).
+  vite-plugin-svelte 5.1.1 has a cache race where the pre-transform
+  scanner can request the style virtual module before the parent
+  .svelte file has been compiled, causing the raw .svelte source to
+  be fed into PostCSS as if it were CSS. Because AppBackground is
+  the very first component rendered by +layout.svelte, it consistently
+  triggers that race. Plain CSS skips the preprocess hop entirely.
+  The 3 SCSS color tokens used here are inlined as their literal hex
+  values (matching `$color-bg-primary`, `$color-primary`, `$color-accent`
+  in src/lib/styles/variables.scss).
+-->
+<style>
   .bg-layer {
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
-    background: $color-bg-primary;
+    background: #000000;
   }
 
-  // ── Mesh gradient container ──
+  /* ── Mesh gradient container ── */
   .bg-mesh {
     position: absolute;
     inset: 0;
@@ -52,14 +64,14 @@
     transition:
       opacity 0.3s ease-out,
       filter 0.3s ease-out;
-
-    &.pulsing {
-      opacity: 0.7;
-      filter: blur(70px) saturate(2);
-    }
   }
 
-  // ── Orbs — large drifting gradient blobs ──
+  .bg-mesh.pulsing {
+    opacity: 0.7;
+    filter: blur(70px) saturate(2);
+  }
+
+  /* ── Orbs — large drifting gradient blobs ── */
   .orb {
     position: absolute;
     border-radius: 50%;
@@ -73,8 +85,8 @@
     left: -20%;
     background: radial-gradient(
       circle,
-      rgba($color-primary, 0.6) 0%,
-      rgba($color-primary, 0.15) 40%,
+      rgba(229, 9, 20, 0.6) 0%,
+      rgba(229, 9, 20, 0.15) 40%,
       transparent 65%
     );
     animation: drift-1 12s ease-in-out infinite;
@@ -87,8 +99,8 @@
     right: -15%;
     background: radial-gradient(
       circle,
-      rgba($color-accent, 0.5) 0%,
-      rgba($color-accent, 0.12) 40%,
+      rgba(178, 7, 16, 0.5) 0%,
+      rgba(178, 7, 16, 0.12) 40%,
       transparent 65%
     );
     animation: drift-2 15s ease-in-out infinite;
@@ -101,8 +113,8 @@
     left: 45%;
     background: radial-gradient(
       circle,
-      rgba($color-primary, 0.35) 0%,
-      rgba($color-primary, 0.08) 45%,
+      rgba(229, 9, 20, 0.35) 0%,
+      rgba(229, 9, 20, 0.08) 45%,
       transparent 65%
     );
     animation: drift-3 10s ease-in-out infinite;
@@ -115,8 +127,8 @@
     right: 15%;
     background: radial-gradient(
       circle,
-      rgba($color-accent, 0.3) 0%,
-      rgba($color-primary, 0.06) 45%,
+      rgba(178, 7, 16, 0.3) 0%,
+      rgba(229, 9, 20, 0.06) 45%,
       transparent 65%
     );
     animation: drift-4 13s ease-in-out infinite;
@@ -129,14 +141,14 @@
     left: 20%;
     background: radial-gradient(
       circle,
-      rgba($color-primary, 0.3) 0%,
-      rgba($color-primary, 0.06) 40%,
+      rgba(229, 9, 20, 0.3) 0%,
+      rgba(229, 9, 20, 0.06) 40%,
       transparent 65%
     );
     animation: drift-5 11s ease-in-out infinite;
   }
 
-  // ── Drift keyframes — wide, fast organic movement ──
+  /* ── Drift keyframes — wide, fast organic movement ── */
   @keyframes drift-1 {
     0%,
     100% {
@@ -223,7 +235,7 @@
     }
   }
 
-  // ── Film grain noise ──
+  /* ── Film grain noise ── */
   .bg-noise {
     position: absolute;
     inset: -50%;
@@ -269,15 +281,15 @@
     }
   }
 
-  // ── Vignette ──
+  /* ── Vignette ── */
   .bg-vignette {
     position: absolute;
     inset: 0;
     background: radial-gradient(
       ellipse 100% 100% at 50% 50%,
       transparent 30%,
-      rgba($color-bg-primary, 0.5) 60%,
-      rgba($color-bg-primary, 0.85) 100%
+      rgba(0, 0, 0, 0.5) 60%,
+      rgba(0, 0, 0, 0.85) 100%
     );
     z-index: 3;
   }

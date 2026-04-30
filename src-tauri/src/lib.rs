@@ -11,17 +11,28 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             greet,
-            // ── TVmaze ──
-            api::tvmaze::tvmaze_search_shows,
-            api::tvmaze::tvmaze_discover_shows,
-            api::tvmaze::tvmaze_show_details,
-            // ── Jikan / OpenLibrary ──
-            api::jikan::search_anime,
-            api::jikan::anime_details,
-            api::jikan::search_manga,
-            api::jikan::manga_details,
-            api::openlib::search_books,
-            api::openlib::book_details
+            // ── TMDB (movies + series) ──
+            api::tmdb::tmdb_discover_movies,
+            api::tmdb::tmdb_search_movies,
+            api::tmdb::tmdb_movie_details,
+            api::tmdb::tmdb_genres_movies,
+            api::tmdb::tmdb_discover_tv,
+            api::tmdb::tmdb_search_tv,
+            api::tmdb::tmdb_tv_details,
+            api::tmdb::tmdb_genres_tv,
+            // ── Jikan / iTunes (anime/manga/books) ──
+            api::anilist::anilist_search_anime,
+            api::anilist::anilist_anime_details,
+            api::anilist::anilist_search_manga,
+            api::anilist::anilist_manga_details,
+            api::anilist::anilist_genres,
+            api::itunes::itunes_search,
+            api::itunes::itunes_details,
+            // ── RAWG (games) ──
+            api::rawg::rawg_search,
+            api::rawg::rawg_discover,
+            api::rawg::rawg_details,
+            api::rawg::rawg_genres
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

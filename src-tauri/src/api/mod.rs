@@ -1,3 +1,4 @@
-pub mod jikan;
-pub mod openlib;
-pub mod tvmaze;
+pub mod anilist;
+pub mod itunes;
+pub mod rawg;
+pub mod tmdb;
