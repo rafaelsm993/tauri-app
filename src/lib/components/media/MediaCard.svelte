@@ -6,6 +6,7 @@
     getRating,
     MEDIA_LABELS,
   } from "$lib/types/media";
+  import WatchlistButton from "$lib/components/ui/WatchlistButton.svelte";
 
   let { item, onclick } = $props<{
     item: MediaItem;
@@ -19,7 +20,7 @@
   const poster = $derived(getPosterUrl(item));
   const year = $derived(getYear(item));
   const rating = $derived(getRating(item));
-  const badge = $derived(MEDIA_LABELS[item.media_type as MediaType] ?? 'Mídia');
+  const badge = $derived(MEDIA_LABELS[item.media_type as MediaType] ?? "Mídia");
 </script>
 
 <button class="card" {onclick} type="button">
@@ -102,11 +103,40 @@
     <span class="card__label-title">{item.title}</span>
     {#if year}<span class="card__label-year">{year}</span>{/if}
   </div>
+
+  <!-- WatchlistButton: floating action, shown on hover -->
+  <div
+    class="card__wl-action"
+    tabindex="0"
+    role="button"
+    aria-label="Minha Lista"
+    onclick={(e) => e.stopPropagation()}
+    onkeydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        // Optionally, focus the WatchlistButton or open dropdown
+      }
+    }}
+  >
+    <WatchlistButton {item} compact />
+  </div>
 </button>
 
 <style lang="scss">
+  // ── WatchlistButton container ────────────────────────────
+  .card__wl-action {
+    position: absolute;
+    bottom: $spacing-sm;
+    right: $spacing-sm;
+    z-index: 10;
+    opacity: 1;
+    transition: opacity $dur-normal $ease-out-expo;
+  }
+
   // ── Card shell ──────────────────────────────────────────
   .card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: $spacing-xs;
@@ -214,6 +244,7 @@
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 3;
+      line-clamp: 3;
       -webkit-box-orient: vertical;
     }
 
@@ -297,6 +328,7 @@
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -308,6 +340,7 @@
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

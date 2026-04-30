@@ -8,6 +8,7 @@
   import { RawgAPI } from "$lib/api/rawg";
   import type { MediaDetail } from "$lib/types/media";
   import { ui } from "$lib/stores/ui.svelte";
+  import WatchlistButton from "$lib/components/ui/WatchlistButton.svelte";
 
   let detail = $state<MediaDetail | null>(null);
   let loading = $state(true);
@@ -196,6 +197,9 @@
     <div class="hero-content">
       <button class="back-btn" onclick={() => goto("/")}>← Voltar</button>
       <h1 class="hero-title">{detail.title}</h1>
+      <div style="margin-top: 12px;">
+        <WatchlistButton item={detail} />
+      </div>
       {#if detail.tagline}
         <p class="hero-tagline">{detail.tagline}</p>
       {/if}
@@ -302,15 +306,16 @@
       {#if detail.cast.length > 0}
         <div class="cast-section">
           <h3 class="section-title">Elenco</h3>
+          <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
           <div
             class="cast-scroll"
+            role="list"
             class:grabbing={dragging}
             bind:this={castEl}
             onmousedown={onDragStart}
             onmousemove={onDragMove}
             onmouseup={onDragEnd}
             onmouseleave={onDragEnd}
-            role="list"
           >
             {#each detail.cast as member (member.id)}
               <div class="cast-card">
@@ -420,8 +425,7 @@
     z-index: 1;
   }
 
-  .detail-poster {
-  }
+  // .detail-poster { }
 
   .detail-info {
     min-width: 0;

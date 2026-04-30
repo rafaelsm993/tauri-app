@@ -1,3 +1,12 @@
+// ── User type ─────────────────────────────────────────────
+export interface User {
+  id: number | string;
+  name: string;
+  email: string;
+}
+// Re-export WatchlistStatus for unified import
+import type { WatchlistStatus as _WatchlistStatus } from '../api/watchlist';
+export type WatchlistStatus = _WatchlistStatus;
 // ================================================================
 // TauriFlix — Core Media Types
 // Designed to be reused by TMDB, Jikan (anime/manga) and OpenLibrary.
