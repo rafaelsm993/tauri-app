@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { userStore } from "$lib/stores/user.svelte";
   import { watchlist } from "$lib/stores/watchlist.svelte";
-  import { AuthAPI } from "$lib/api/auth";
+  import { CloudAPI } from "$lib/api/cloud";
   import type { User } from "$lib/types/media";
 
   // Redirect if already logged in
@@ -35,7 +35,12 @@
   let profilesLoading = $state(true);
 
   $effect(() => {
-    AuthAPI.listUsers()
+    if (CloudAPI.isConfigured()) {
+      profilesLoading = false;
+      return;
+    }
+    userStore
+      .listUsers()
       .then((users) => {
         existingUsers = users;
       })
@@ -100,11 +105,7 @@
 
     regLoading = true;
     try {
-      await AuthAPI.register({
-        name: regName.trim(),
-        email: regEmail.trim(),
-        password: regPassword,
-      });
+      await userStore.register(regName.trim(), regEmail.trim(), regPassword);
       // Redirect to login tab with email pre-filled
       loginEmail = regEmail.trim();
       loginPassword = "";
@@ -116,8 +117,9 @@
       regSuccess = true;
       tab = "login";
       // Refresh profile list
-      AuthAPI.listUsers()
-        .then((users) => {
+      userStore
+        .listUsers()
+        .then((users: User[]) => {
           existingUsers = users;
         })
         .catch(() => {});
@@ -174,8 +176,8 @@
           </p>
         {/if}
 
-        <!-- Existing profiles -->
-        {#if !profilesLoading && existingUsers.length > 0}
+        <!-- Existing profiles — local mode only (cloud exposes all users globally) -->
+        {#if !CloudAPI.isConfigured() && !profilesLoading && existingUsers.length > 0}
           <p class="auth-label">Selecionar perfil</p>
           <div class="profile-list">
             {#each existingUsers as u (u.id)}
