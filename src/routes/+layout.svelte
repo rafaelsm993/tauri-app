@@ -5,6 +5,21 @@
   import type { Snippet } from "svelte";
 
   let { children } = $props<{ children: Snippet }>();
+
+  // Auth guard
+  $effect(() => {
+    if (!userStore.isLoggedIn && $page.url.pathname !== "/auth") {
+      goto("/auth", { replaceState: true });
+    }
+    if (userStore.isLoggedIn && $page.url.pathname === "/auth") {
+      goto("/", { replaceState: true });
+    }
+  });
+
+  function handleLogout() {
+    watchlist.clear();
+    userStore.logout();
+  }
 </script>
 
 <AppBackground />

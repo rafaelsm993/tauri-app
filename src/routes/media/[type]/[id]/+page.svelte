@@ -269,6 +269,11 @@
         </div>
       {/if}
 
+      <!-- Watchlist action -->
+      <div class="watchlist-action">
+        <WatchlistButton item={detail} />
+      </div>
+
       <!-- Overview -->
       {#if detail.overview}
         <p class="overview">{detail.overview}</p>
@@ -487,7 +492,7 @@
     display: flex;
     gap: $spacing-xs;
     flex-wrap: wrap;
-    margin-bottom: $spacing-lg;
+    margin-bottom: $spacing-md;
   }
 
   .genre-pill {
@@ -500,6 +505,11 @@
     font-family: $font-mono;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+  }
+
+  // ── Watchlist action ───────────────────────────────────
+  .watchlist-action {
+    margin-bottom: $spacing-lg;
   }
 
   // ── Overview ────────────────────────────────────────────
