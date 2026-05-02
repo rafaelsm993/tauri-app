@@ -1,9 +1,12 @@
 <script lang="ts">
-  import type { MediaItem, WatchlistStatus } from '$lib/types/media';
-  import { watchlist } from '$lib/stores/watchlist.svelte';
-  import { userStore } from '$lib/stores/user.svelte';
+  import type { MediaItem, WatchlistStatus } from "$lib/types/media";
+  import { watchlist } from "$lib/stores/watchlist.svelte";
+  import { userStore } from "$lib/stores/user.svelte";
 
-  let { item, compact = false } = $props<{ item: MediaItem; compact?: boolean }>();
+  let { item, compact = false } = $props<{
+    item: MediaItem;
+    compact?: boolean;
+  }>();
 
   let showDropdown = $state(false);
   let containerEl = $state<HTMLDivElement | undefined>(undefined);
@@ -13,15 +16,15 @@
   const currentStatus = $derived(watchlist.getStatus(item.id));
 
   const statusLabels: Record<WatchlistStatus, string> = {
-    want: 'Quero Assistir',
-    watching: 'Assistindo',
-    watched: 'Assistido',
+    want: "Quero Assistir",
+    watching: "Assistindo",
+    watched: "Assistido",
   };
 
   const statusIcons: Record<WatchlistStatus, string> = {
-    want: '🔖',
-    watching: '▶',
-    watched: '✓',
+    want: "🔖",
+    watching: "▶",
+    watched: "✓",
   };
 
   $effect(() => {
@@ -31,8 +34,8 @@
         showDropdown = false;
       }
     }
-    document.addEventListener('click', handleOutsideClick);
-    return () => document.removeEventListener('click', handleOutsideClick);
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
   });
 
   async function handleAdd(status: WatchlistStatus, e: MouseEvent) {
@@ -78,11 +81,13 @@
       <button
         class="wl-btn wl-btn--active"
         onclick={toggleDropdown}
-        title={currentStatus ? statusLabels[currentStatus] : ''}
+        title={currentStatus ? statusLabels[currentStatus] : ""}
         aria-label="Opções da lista"
         aria-expanded={showDropdown}
       >
-        <span class="wl-icon">{currentStatus ? statusIcons[currentStatus] : '✓'}</span>
+        <span class="wl-icon"
+          >{currentStatus ? statusIcons[currentStatus] : "✓"}</span
+        >
         {#if !compact && currentStatus}
           <span class="wl-label">{statusLabels[currentStatus]}</span>
         {/if}
@@ -99,7 +104,9 @@
               role="menuitem"
               onclick={(e) => handleAdd(key as WatchlistStatus, e)}
             >
-              <span class="wl-option-icon">{statusIcons[key as WatchlistStatus]}</span>
+              <span class="wl-option-icon"
+                >{statusIcons[key as WatchlistStatus]}</span
+              >
               {label}
             </button>
           {/each}
@@ -111,7 +118,9 @@
               role="menuitem"
               onclick={(e) => handleStatusChange(key as WatchlistStatus, e)}
             >
-              <span class="wl-option-icon">{statusIcons[key as WatchlistStatus]}</span>
+              <span class="wl-option-icon"
+                >{statusIcons[key as WatchlistStatus]}</span
+              >
               {label}
             </button>
           {/each}
@@ -158,7 +167,9 @@
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background $dur-fast, border-color $dur-fast;
+    transition:
+      background $dur-fast,
+      border-color $dur-fast;
     white-space: nowrap;
     backdrop-filter: blur(6px);
 
@@ -212,7 +223,9 @@
     font-size: 0.85rem;
     text-align: left;
     cursor: pointer;
-    transition: background $dur-fast, color $dur-fast;
+    transition:
+      background $dur-fast,
+      color $dur-fast;
 
     &:hover {
       background: rgba(255, 255, 255, 0.06);

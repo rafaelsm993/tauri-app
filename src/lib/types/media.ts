@@ -1,7 +1,18 @@
+// ── User type ─────────────────────────────────────────────
+export interface User {
+  id: number | string;
+  name: string;
+  email: string;
+}
+// Re-export WatchlistStatus for unified import
+import type { WatchlistStatus as _WatchlistStatus } from '../api/watchlist';
+export type WatchlistStatus = _WatchlistStatus;
 // ================================================================
 // TauriFlix — Core Media Types
-// Designed to be reused by TMDB, Jikan (anime) and OpenLibrary.
+// Designed to be reused by TMDB, Jikan (anime/manga) and OpenLibrary.
 // ================================================================
+
+export type MediaType = 'movie' | 'tv' | 'anime' | 'manga' | 'book' | 'game';
 
 // Generic paginated envelope — mirrors TMDB, Jikan, etc.
 export interface PaginatedResult<T> {
@@ -13,17 +24,22 @@ export interface PaginatedResult<T> {
 
 // Unified media item — every provider maps into this shape
 export interface MediaItem {
-  id:            number;
+  id:            number | string;  // string for OpenLibrary keys
   title:         string;
   overview:      string;
-  poster_path:   string | null;
+  poster_path:   string | null;    // full URL for Jikan/OpenLibrary, TMDB path for TMDB
   backdrop_path: string | null;
   vote_average:  number;
   vote_count:    number;
-  release_date?: string;    // movies
-  first_air_date?:string;   // tv series
+  release_date?: string;           // movies
+  first_air_date?:string;          // tv series
   genre_ids?:    number[];
-  media_type?:   'movie' | 'tv' | 'anime' | 'book';
+  media_type:    MediaType;
+  // Provider-specific extras
+  author?:       string;           // books
+  episodes?:     number | null;    // anime
+  chapters?:     number | null;    // manga
+  developer?:    string;           // games
 }
 
 // ── Detail sub-types ────────────────────────────────────────
@@ -32,8 +48,8 @@ export interface CastMember { id: number; name: string; character: string; profi
 export interface VideoClip { key: string; site: string; type: string; name: string; }
 
 export interface MediaDetail {
-  id:            number;
-  media_type:    'movie' | 'tv';
+  id:            number | string;
+  media_type:    MediaType;
   title:         string;
   tagline:       string;
   overview:      string;
@@ -46,6 +62,18 @@ export interface MediaDetail {
   genres:        Genre[];
   cast:          CastMember[];
   videos:        VideoClip[];
+  // Provider-specific extras
+  author?:       string;
+  episodes?:     number | null;
+  chapters?:     number | null;
+  volumes?:      number | null;
+  status?:       string;
+  studios?:      string[];
+  subjects?:     string[];
+  developer?:    string;
+  publisher?:    string;
+  platforms?:    string[];
+  screenshots?:  string[];
 }
 
 // ── TMDB image URL builder ──────────────────────────────────
@@ -60,18 +88,18 @@ export const TMDB_IMG = {
     path ? `${TMDB_BASE}/${size}${path}` : null,
 } as const;
 
-// ── Auth ────────────────────────────────────────────────────
-export interface User {
-  id: string;
-  username: string;  email?: string;
-  avatar_url?: string;}
+// ── OpenLibrary cover URL builder ───────────────────────────
+export const OL_IMG = {
+  cover: (coverId: number | null, size: 'S'|'M'|'L' = 'M') =>
+    coverId ? `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg` : null,
+} as const;
 
-// ── Watchlist ───────────────────────────────────────────────
-export type WatchlistStatus = 'want' | 'watching' | 'watched';
-
-export interface WatchlistItem extends MediaItem {
-  status: WatchlistStatus;
-  addedAt: string; // ISO date string
+// ── Unified poster URL helper ───────────────────────────────
+// All current providers (Cinemeta, Jikan, OpenLibrary) store absolute URLs
+// in poster_path. The TMDB_IMG helper above is kept only for legacy callers
+// that still hold a relative TMDB path.
+export function getPosterUrl(item: MediaItem): string | null {
+  return item.poster_path ?? null;
 }
 
 // ── Derived display helpers ─────────────────────────────────
@@ -82,3 +110,24 @@ export const getYear = (item: MediaItem): string => {
 
 export const getRating = (item: MediaItem): string =>
   item.vote_average > 0 ? item.vote_average.toFixed(1) : '';
+
+export const MEDIA_LABELS: Record<MediaType, string> = {
+  movie: 'Filme',
+  tv: 'Série',
+  anime: 'Anime',
+  manga: 'Mangá',
+  book: 'Livro',
+  game: 'Jogo',
+};
+
+// ── Genre filter ─────────────────────────────────────────────
+// Categories that support server-side genre filtering. Books use a curated
+// hardcoded list (Apple Books category IDs) since iTunes has no public
+// genre-list endpoint, but the filter is still surfaced in the UI.
+export const GENRE_SUPPORTED: ReadonlySet<MediaType> = new Set<MediaType>([
+  'movie', 'tv', 'anime', 'manga', 'book', 'game',
+]);
+
+// Genre id is numeric for TMDB/Jikan, string slug for RAWG.
+export type GenreId = number | string;
+export interface GenreOption { id: GenreId; name: string; }

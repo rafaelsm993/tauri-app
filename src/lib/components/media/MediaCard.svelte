@@ -1,6 +1,11 @@
 <script lang="ts">
-  import type { MediaItem } from "$lib/types/media";
-  import { TMDB_IMG, getYear, getRating } from "$lib/types/media";
+  import type { MediaItem, MediaType } from "$lib/types/media";
+  import {
+    getPosterUrl,
+    getYear,
+    getRating,
+    MEDIA_LABELS,
+  } from "$lib/types/media";
   import WatchlistButton from "$lib/components/ui/WatchlistButton.svelte";
 
   let { item, onclick } = $props<{
@@ -12,10 +17,10 @@
   let errored = $state(false);
 
   // $derived ensures these re-evaluate if item prop changes
-  const poster = $derived(TMDB_IMG.poster(item.poster_path, "w342"));
+  const poster = $derived(getPosterUrl(item));
   const year = $derived(getYear(item));
   const rating = $derived(getRating(item));
-  const badge = $derived(item.media_type === "tv" ? "Série" : "Filme");
+  const badge = $derived(MEDIA_LABELS[item.media_type as MediaType] ?? "Mídia");
 </script>
 
 <button class="card" {onclick} type="button">
@@ -68,11 +73,22 @@
 
       <div class="card__overlay-body">
         <p class="card__overlay-title">{item.title}</p>
+        {#if item.author}
+          <p class="card__author">{item.author}</p>
+        {/if}
         {#if item.overview}
           <p class="card__overview">{item.overview}</p>
         {/if}
         <div class="card__meta">
           {#if year}<span>{year}</span>{/if}
+          {#if item.episodes}
+            <span>·</span>
+            <span>{item.episodes} eps</span>
+          {/if}
+          {#if item.chapters}
+            <span>·</span>
+            <span>{item.chapters} caps</span>
+          {/if}
           {#if item.vote_count > 0}
             <span>·</span>
             <span>{item.vote_count.toLocaleString("pt-BR")} avaliações</span>
@@ -93,11 +109,40 @@
     <span class="card__label-title">{item.title}</span>
     {#if year}<span class="card__label-year">{year}</span>{/if}
   </div>
+
+  <!-- WatchlistButton: floating action, shown on hover -->
+  <div
+    class="card__wl-action"
+    tabindex="0"
+    role="button"
+    aria-label="Minha Lista"
+    onclick={(e) => e.stopPropagation()}
+    onkeydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        // Optionally, focus the WatchlistButton or open dropdown
+      }
+    }}
+  >
+    <WatchlistButton {item} compact />
+  </div>
 </button>
 
 <style lang="scss">
+  // ── WatchlistButton container ────────────────────────────
+  .card__wl-action {
+    position: absolute;
+    bottom: $spacing-sm;
+    right: $spacing-sm;
+    z-index: 10;
+    opacity: 1;
+    transition: opacity $dur-normal $ease-out-expo;
+  }
+
   // ── Card shell ──────────────────────────────────────────
   .card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: $spacing-xs;
@@ -205,6 +250,7 @@
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 3;
+      line-clamp: 3;
       -webkit-box-orient: vertical;
     }
 
@@ -288,6 +334,7 @@
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -299,8 +346,17 @@
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .card__author {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.45);
+    font-style: italic;
+    margin: 0;
+    @include truncate;
   }
 
   .card__meta {

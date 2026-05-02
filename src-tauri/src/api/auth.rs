@@ -1,135 +1,204 @@
-use argon2::{
-    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-    Argon2,
-};
-use rand_core::OsRng;
-use serde::Serialize;
-use sqlx::PgPool;
+use rusqlite::params;
+use serde::{Deserialize, Serialize};
 use tauri::State;
-use uuid::Uuid;
 
-#[derive(Serialize, Clone)]
-pub struct PublicUser {
-    pub id: String,
-    pub username: String,
-    pub email: Option<String>,
-    pub avatar_url: Option<String>,
+use super::watchlist::DbConn;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AuthUser {
+    pub id: i64,
+    pub name: String,
+    pub email: String,
 }
 
-// Internal row type used only for DB reads
-#[derive(sqlx::FromRow)]
-struct UserRow {
-    id: String,
-    username: String,
-    password_hash: Option<String>,
-    email: Option<String>,
-    avatar_url: Option<String>,
+#[derive(Debug, Deserialize)]
+pub struct RegisterPayload {
+    pub name: String,
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoginPayload {
+    pub email: String,
+    pub password: String,
+}
+
+/// Initialize the users table (called from DbConn::new)
+pub fn init_users_table(conn: &rusqlite::Connection) -> rusqlite::Result<()> {
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        [],
+    )?;
+    Ok(())
+}
+
+/// Hash a password using a simple SHA-256 approach with a salt.
+/// For a desktop-only app this is sufficient; for production use bcrypt/argon2.
+fn hash_password(password: &str, salt: &str) -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    let mut hasher = DefaultHasher::new();
+    format!("{}:{}", salt, password).hash(&mut hasher);
+    let h1 = hasher.finish();
+
+    let mut hasher2 = DefaultHasher::new();
+    format!("{}:{}", h1, salt).hash(&mut hasher2);
+    format!("{:016x}{:016x}", h1, hasher2.finish())
+}
+
+fn generate_salt() -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let t = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    format!("{:x}", t)
 }
 
 #[tauri::command]
-pub async fn register_user(
-    pool: State<'_, PgPool>,
-    username: String,
-    password: String,
-) -> Result<PublicUser, String> {
-    let username = username.trim().to_string();
+pub async fn auth_register(
+    state: State<'_, DbConn>,
+    payload: RegisterPayload,
+) -> Result<AuthUser, String> {
+    let conn = state.0.lock().unwrap();
 
-    if username.is_empty() {
-        return Err("Nome de usuário não pode ser vazio.".to_string());
+    // Validate inputs
+    if payload.name.trim().is_empty() {
+        return Err("Nome é obrigatório.".into());
     }
-    if password.len() < 6 {
-        return Err("A senha deve ter pelo menos 6 caracteres.".to_string());
+    if payload.email.trim().is_empty() || !payload.email.contains('@') {
+        return Err("Email inválido.".into());
+    }
+    if payload.password.len() < 4 {
+        return Err("Senha deve ter pelo menos 4 caracteres.".into());
     }
 
-    // Check for duplicate username among password-based accounts only.
-    // Google users may share display names since they are identified by google_id/email.
-    let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM users WHERE lower(username) = lower($1) AND password_hash IS NOT NULL)",
-    )
-    .bind(&username)
-    .fetch_one(pool.inner())
-    .await
-    .map_err(|e| e.to_string())?;
+    // Check if email already exists
+    let exists: bool = conn
+        .query_row(
+            "SELECT COUNT(*) FROM users WHERE email = ?1",
+            params![payload.email.trim().to_lowercase()],
+            |row| row.get::<_, i64>(0),
+        )
+        .map(|c| c > 0)
+        .unwrap_or(false);
 
     if exists {
-        return Err("Nome de usuário já existe.".to_string());
+        return Err("Email já cadastrado.".into());
     }
 
-    let salt = SaltString::generate(&mut OsRng);
-    let password_hash = Argon2::default()
-        .hash_password(password.as_bytes(), &salt)
-        .map_err(|e| e.to_string())?
-        .to_string();
+    let salt = generate_salt();
+    let password_hash = format!("{}:{}", salt, hash_password(&payload.password, &salt));
 
-    let id = Uuid::new_v4().to_string();
-
-    sqlx::query("INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)")
-        .bind(&id)
-        .bind(&username)
-        .bind(&password_hash)
-        .execute(pool.inner())
-        .await
-        .map_err(|e| e.to_string())?;
-
-    Ok(PublicUser { id, username, email: None, avatar_url: None })
-}
-
-#[tauri::command]
-pub async fn login_user(
-    pool: State<'_, PgPool>,
-    username: String,
-    password: String,
-) -> Result<PublicUser, String> {
-    let row = sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, password_hash, email, avatar_url FROM users WHERE lower(username) = lower($1) AND password_hash IS NOT NULL",
+    conn.execute(
+        "INSERT INTO users (name, email, password_hash) VALUES (?1, ?2, ?3)",
+        params![
+            payload.name.trim(),
+            payload.email.trim().to_lowercase(),
+            password_hash
+        ],
     )
-    .bind(username.trim())
-    .fetch_optional(pool.inner())
-    .await
-    .map_err(|e| e.to_string())?
-    .ok_or_else(|| "Credenciais inválidas.".to_string())?;
+    .map_err(|e| e.to_string())?;
 
-    let hash_str = row.password_hash
-        .as_deref()
-        .ok_or_else(|| "Esta conta usa login social. Utilize 'Entrar com Google'.".to_string())?;
-    let parsed_hash = PasswordHash::new(hash_str).map_err(|e| e.to_string())?;
-    Argon2::default()
-        .verify_password(password.as_bytes(), &parsed_hash)
-        .map_err(|_| "Credenciais inválidas.".to_string())?;
+    let user_id = conn.last_insert_rowid();
 
-    Ok(PublicUser {
-        id: row.id,
-        username: row.username,
-        email: row.email,
-        avatar_url: row.avatar_url,
+    Ok(AuthUser {
+        id: user_id,
+        name: payload.name.trim().to_string(),
+        email: payload.email.trim().to_lowercase(),
     })
 }
 
-#[derive(sqlx::FromRow)]
-struct UserListRow {
-    id: String,
-    username: String,
-    email: Option<String>,
-    avatar_url: Option<String>,
+#[tauri::command]
+pub async fn auth_login(
+    state: State<'_, DbConn>,
+    payload: LoginPayload,
+) -> Result<AuthUser, String> {
+    let conn = state.0.lock().unwrap();
+
+    let email = payload.email.trim().to_lowercase();
+
+    let result: Result<(i64, String, String, String), _> = conn.query_row(
+        "SELECT id, name, email, password_hash FROM users WHERE email = ?1",
+        params![email],
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+    );
+
+    match result {
+        Ok((id, name, user_email, stored_hash)) => {
+            // stored_hash format: "salt:hash"
+            let parts: Vec<&str> = stored_hash.splitn(2, ':').collect();
+            if parts.len() != 2 {
+                return Err("Erro interno de autenticação.".into());
+            }
+            let salt = parts[0];
+            let expected_hash = parts[1];
+            let computed_hash = hash_password(&payload.password, salt);
+
+            if computed_hash != expected_hash {
+                return Err("Email ou senha incorretos.".into());
+            }
+
+            Ok(AuthUser {
+                id,
+                name,
+                email: user_email,
+            })
+        }
+        Err(_) => Err("Email ou senha incorretos.".into()),
+    }
 }
 
 #[tauri::command]
-pub async fn list_users(pool: State<'_, PgPool>) -> Result<Vec<PublicUser>, String> {
-    let rows = sqlx::query_as::<_, UserListRow>(
-        "SELECT id, username, email, avatar_url FROM users ORDER BY created_at",
-    )
-    .fetch_all(pool.inner())
-    .await
-    .map_err(|e| e.to_string())?;
+pub async fn auth_get_user(
+    state: State<'_, DbConn>,
+    user_id: i64,
+) -> Result<Option<AuthUser>, String> {
+    let conn = state.0.lock().unwrap();
 
-    Ok(rows
-        .into_iter()
-        .map(|r| PublicUser {
-            id: r.id,
-            username: r.username,
-            email: r.email,
-            avatar_url: r.avatar_url,
-        })
-        .collect())
+    let result = conn.query_row(
+        "SELECT id, name, email FROM users WHERE id = ?1",
+        params![user_id],
+        |row| {
+            Ok(AuthUser {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                email: row.get(2)?,
+            })
+        },
+    );
+
+    match result {
+        Ok(user) => Ok(Some(user)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
 }
 
+#[tauri::command]
+pub async fn auth_list_users(state: State<'_, DbConn>) -> Result<Vec<AuthUser>, String> {
+    let conn = state.0.lock().unwrap();
+    let mut stmt = conn
+        .prepare("SELECT id, name, email FROM users ORDER BY name")
+        .map_err(|e| e.to_string())?;
+    let users = stmt
+        .query_map([], |row| {
+            Ok(AuthUser {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                email: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .filter_map(Result::ok)
+        .collect();
+    Ok(users)
+}

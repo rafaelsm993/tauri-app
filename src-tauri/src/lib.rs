@@ -1,6 +1,6 @@
 pub mod api;
 
-use sqlx::postgres::PgPoolOptions;
+use api::watchlist::DbConn;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -9,55 +9,46 @@ fn greet(name: &str) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    dotenvy::dotenv().ok();
-
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL não encontrado. Verifique seu arquivo .env");
-
-    let pool = tauri::async_runtime::block_on(async {
-        let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&database_url)
-            .await
-            .expect("Falha ao conectar ao PostgreSQL. Verifique se o banco está rodando.");
-
-        sqlx::migrate!("./migrations")
-            .run(&pool)
-            .await
-            .expect("Falha ao executar migrations do banco de dados.");
-
-        pool
-    });
+    let db = DbConn::new("tauriflix.db").expect("Failed to open database");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .manage(pool)
-        .manage(api::google_auth::GoogleAuthCancel::new())
+        .manage(db)
         .invoke_handler(tauri::generate_handler![
             greet,
-            // ── TMDB ──
-            api::tmdb::search_movies,
-            api::tmdb::search_series,
-            api::tmdb::discover_movies,
-            api::tmdb::discover_series,
-            api::tmdb::movie_details,
-            api::tmdb::series_details,
-            // ── Jikan / OpenLibrary ──
-            api::jikan::search_anime,
-            api::jikan::anime_details,
-            api::openlib::search_books,
-            api::openlib::book_details,
-            // ── Auth ──
-            api::auth::register_user,
-            api::auth::login_user,
-            api::auth::list_users,
-            // ── Google OAuth ──
-            api::google_auth::google_login,
-            api::google_auth::cancel_google_login,
-            api::google_auth::complete_google_registration,
-            // ── Watchlist persistence ──
-            api::store::load_watchlist,
-            api::store::save_watchlist
+            // ── TMDB (movies + series) ──
+            api::tmdb::tmdb_discover_movies,
+            api::tmdb::tmdb_search_movies,
+            api::tmdb::tmdb_movie_details,
+            api::tmdb::tmdb_genres_movies,
+            api::tmdb::tmdb_discover_tv,
+            api::tmdb::tmdb_search_tv,
+            api::tmdb::tmdb_tv_details,
+            api::tmdb::tmdb_genres_tv,
+            // ── Jikan / iTunes (anime/manga/books) ──
+            api::anilist::anilist_search_anime,
+            api::anilist::anilist_anime_details,
+            api::anilist::anilist_search_manga,
+            api::anilist::anilist_manga_details,
+            api::anilist::anilist_genres,
+            api::itunes::itunes_search,
+            api::itunes::itunes_details,
+            // ── RAWG (games) ──
+            api::rawg::rawg_search,
+            api::rawg::rawg_discover,
+            api::rawg::rawg_details,
+            api::rawg::rawg_genres,
+            // ── Auth (local SQLite) ──
+            api::auth::auth_register,
+            api::auth::auth_login,
+            api::auth::auth_get_user,
+            api::auth::auth_list_users,
+            // ── Watchlist (local SQLite, per-user) ──
+            api::watchlist::add_to_watchlist,
+            api::watchlist::remove_from_watchlist,
+            api::watchlist::update_watchlist_status,
+            api::watchlist::get_watchlist,
+            api::watchlist::get_watchlist_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

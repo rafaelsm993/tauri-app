@@ -3,8 +3,10 @@
   import { goto } from "$app/navigation";
   import { onDestroy } from "svelte";
   import { TmdbAPI } from "$lib/api/tmdb";
+  import { AnilistAPI } from "$lib/api/anilist";
+  import { ITunesAPI } from "$lib/api/itunes";
+  import { RawgAPI } from "$lib/api/rawg";
   import type { MediaDetail } from "$lib/types/media";
-  import { TMDB_IMG } from "$lib/types/media";
   import { ui } from "$lib/stores/ui.svelte";
   import WatchlistButton from "$lib/components/ui/WatchlistButton.svelte";
 
@@ -53,33 +55,85 @@
   );
   const runtimeStr = $derived(
     detail?.runtime
-      ? `${Math.floor(detail.runtime / 60)}h ${detail.runtime % 60}m`
+      ? detail.media_type === "book"
+        ? `${detail.runtime} páginas`
+        : `${Math.floor(detail.runtime / 60)}h ${detail.runtime % 60}m`
       : "",
   );
+
+  // Build initials (max 2 chars) from a person's name for avatar fallbacks.
+  function initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  // All providers (TVmaze, Jikan, OpenLibrary) now return absolute image URLs
+  // in poster_path / backdrop_path — no path prefixing required.
+  const posterUrl = $derived(detail?.poster_path ?? null);
+  const backdropUrl = $derived(detail?.backdrop_path ?? null);
 
   async function fetchDetail(type: string, id: string) {
     loading = true;
     error = "";
     detail = null;
 
-    if (type !== "movie" && type !== "tv") {
-      error = "Tipo de mídia inválido.";
-      loading = false;
-      return;
-    }
-
-    const numId = parseInt(id, 10);
-    if (isNaN(numId)) {
-      error = "ID inválido.";
-      loading = false;
-      return;
-    }
-
     try {
-      detail =
-        type === "movie"
-          ? await TmdbAPI.movieDetails(numId)
-          : await TmdbAPI.seriesDetails(numId);
+      switch (type) {
+        case "movie": {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
+          detail = await TmdbAPI.movieDetails(numId);
+          break;
+        }
+        case "tv": {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
+          detail = await TmdbAPI.tvDetails(numId);
+          break;
+        }
+        case "anime": {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
+          detail = await AnilistAPI.animeDetails(numId);
+          break;
+        }
+        case "manga": {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
+          detail = await AnilistAPI.mangaDetails(numId);
+          break;
+        }
+        case "book": {
+          const volumeId = decodeURIComponent(id);
+          detail = await ITunesAPI.bookDetails(volumeId);
+          break;
+        }
+        case "game": {
+          const numId = parseInt(id, 10);
+          if (isNaN(numId)) {
+            error = "ID inválido.";
+            break;
+          }
+          detail = await RawgAPI.gameDetails(numId);
+          break;
+        }
+        default:
+          error = "Tipo de mídia inválido.";
+      }
     } catch (e: any) {
       error =
         typeof e === "string"
@@ -136,17 +190,16 @@
 {:else if detail}
   <!-- Hero backdrop -->
   <div class="hero">
-    {#if detail.backdrop_path}
-      <img
-        src={TMDB_IMG.backdrop(detail.backdrop_path, "w1280")}
-        alt=""
-        class="hero-img"
-      />
+    {#if backdropUrl}
+      <img src={backdropUrl} alt="" class="hero-img" />
     {/if}
     <div class="hero-fade"></div>
     <div class="hero-content">
       <button class="back-btn" onclick={() => goto("/")}>← Voltar</button>
       <h1 class="hero-title">{detail.title}</h1>
+      <div style="margin-top: 12px;">
+        <WatchlistButton item={detail} />
+      </div>
       {#if detail.tagline}
         <p class="hero-tagline">{detail.tagline}</p>
       {/if}
@@ -156,12 +209,8 @@
   <!-- Main content -->
   <div class="detail-body">
     <aside class="detail-poster">
-      {#if detail.poster_path}
-        <img
-          src={TMDB_IMG.poster(detail.poster_path, "w500")}
-          alt={detail.title}
-          class="poster-img"
-        />
+      {#if posterUrl}
+        <img src={posterUrl} alt={detail.title} class="poster-img" />
       {:else}
         <div class="poster-placeholder">Sem poster</div>
       {/if}
@@ -179,7 +228,37 @@
         {#if runtimeStr}
           <span class="meta-badge">{runtimeStr}</span>
         {/if}
+        {#if detail.episodes}
+          <span class="meta-badge">{detail.episodes} episódios</span>
+        {/if}
+        {#if detail.chapters}
+          <span class="meta-badge">{detail.chapters} capítulos</span>
+        {/if}
+        {#if detail.volumes}
+          <span class="meta-badge">{detail.volumes} volumes</span>
+        {/if}
+        {#if detail.status}
+          <span class="meta-badge">{detail.status}</span>
+        {/if}
+        {#if detail.platforms && detail.platforms.length > 0}
+          {#each detail.platforms as p (p)}
+            <span class="meta-badge">{p}</span>
+          {/each}
+        {/if}
       </div>
+
+      <!-- Studios / Author / Developer -->
+      {#if detail.developer}
+        <p class="detail-studios">
+          {detail.developer}{#if detail.publisher && detail.publisher !== detail.developer}
+            ·  {detail.publisher}{/if}
+        </p>
+      {:else if detail.studios && detail.studios.length > 0}
+        <p class="detail-studios">{detail.studios.join(", ")}</p>
+      {/if}
+      {#if detail.author}
+        <p class="detail-author">{detail.author}</p>
+      {/if}
 
       <!-- Genres -->
       {#if detail.genres.length > 0}
@@ -216,31 +295,46 @@
         </div>
       {/if}
 
+      <!-- Screenshots (games) -->
+      {#if detail.screenshots && detail.screenshots.length > 0}
+        <div class="shots-section">
+          <h3 class="section-title">Capturas</h3>
+          <div class="shots-scroll">
+            {#each detail.screenshots as src (src)}
+              <img {src} alt="" class="shot-img" loading="lazy" />
+            {/each}
+          </div>
+        </div>
+      {/if}
+
       <!-- Cast -->
       {#if detail.cast.length > 0}
         <div class="cast-section">
           <h3 class="section-title">Elenco</h3>
+          <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
           <div
             class="cast-scroll"
+            role="list"
             class:grabbing={dragging}
             bind:this={castEl}
             onmousedown={onDragStart}
             onmousemove={onDragMove}
             onmouseup={onDragEnd}
             onmouseleave={onDragEnd}
-            role="list"
           >
             {#each detail.cast as member (member.id)}
               <div class="cast-card">
                 {#if member.profile_path}
                   <img
-                    src={TMDB_IMG.profile(member.profile_path)}
+                    src={member.profile_path}
                     alt={member.name}
                     class="cast-photo"
                     loading="lazy"
                   />
                 {:else}
-                  <div class="cast-photo-placeholder"></div>
+                  <div class="cast-photo-placeholder" aria-hidden="true">
+                    {initials(member.name)}
+                  </div>
                 {/if}
                 <span class="cast-name">{member.name}</span>
                 <span class="cast-character">{member.character}</span>
@@ -336,8 +430,7 @@
     z-index: 1;
   }
 
-  .detail-poster {
-  }
+  // .detail-poster { }
 
   .detail-info {
     min-width: 0;
@@ -367,6 +460,14 @@
     display: flex;
     gap: $spacing-sm;
     flex-wrap: wrap;
+    margin-bottom: $spacing-md;
+  }
+
+  .detail-studios,
+  .detail-author {
+    font-size: 0.82rem;
+    color: $color-text-muted;
+    font-style: italic;
     margin-bottom: $spacing-md;
   }
 
@@ -454,6 +555,36 @@
     margin-bottom: $spacing-xl;
   }
 
+  // ── Screenshots (games) ─────────────────────────────────
+  .shots-section {
+    margin-bottom: $spacing-xl;
+  }
+
+  .shots-scroll {
+    display: flex;
+    gap: $spacing-md;
+    overflow-x: auto;
+    padding-bottom: $spacing-sm;
+
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+  }
+
+  .shot-img {
+    flex: 0 0 auto;
+    height: 220px;
+    width: auto;
+    border-radius: $radius-md;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: $color-bg-secondary;
+    object-fit: cover;
+  }
+
   // ── Cast ────────────────────────────────────────────────
   .cast-section {
     margin-bottom: $spacing-xl;
@@ -502,7 +633,20 @@
     width: 72px;
     height: 72px;
     border-radius: 50%;
-    background: $color-bg-secondary;
+    background: linear-gradient(
+      135deg,
+      rgba($color-primary, 0.18),
+      rgba($color-accent, 0.18)
+    );
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-text-main;
+    font-family: $font-display;
+    font-size: 1.2rem;
+    letter-spacing: 0.04em;
+    user-select: none;
   }
 
   .cast-name {

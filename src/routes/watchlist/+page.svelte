@@ -1,43 +1,60 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { watchlist } from '$lib/stores/watchlist.svelte';
-  import MediaCard from '$lib/components/media/MediaCard.svelte';
-  import type { WatchlistStatus } from '$lib/types/media';
+  import { goto } from "$app/navigation";
+  import { watchlist } from "$lib/stores/watchlist.svelte";
+  import MediaCard from "$lib/components/media/MediaCard.svelte";
+  import type { WatchlistStatus } from "$lib/types/media";
 
-  type FilterTab = 'all' | WatchlistStatus;
+  type FilterTab = "all" | WatchlistStatus;
 
-  let activeTab = $state<FilterTab>('all');
+  let activeTab = $state<FilterTab>("all");
 
   const tabs: { key: FilterTab; label: string }[] = [
-    { key: 'all', label: 'Todos' },
-    { key: 'want', label: 'Quero Assistir' },
-    { key: 'watching', label: 'Assistindo' },
-    { key: 'watched', label: 'Assistido' },
+    { key: "all", label: "Todos" },
+    { key: "want", label: "Quero Assistir" },
+    { key: "watching", label: "Assistindo" },
+    { key: "watched", label: "Assistido" },
   ];
 
   const statusColors: Record<WatchlistStatus, string> = {
-    want: '#a78bfa',
-    watching: '#60a5fa',
-    watched: '#4ade80',
+    want: "#a78bfa",
+    watching: "#60a5fa",
+    watched: "#4ade80",
   };
 
   const statusLabels: Record<WatchlistStatus, string> = {
-    want: 'Quero Assistir',
-    watching: 'Assistindo',
-    watched: 'Assistido',
+    want: "Quero Assistir",
+    watching: "Assistindo",
+    watched: "Assistido",
   };
 
+  // Map WatchlistItem to MediaItem for MediaCard
+  import type { WatchlistItem } from "$lib/api/watchlist";
+  import type { MediaItem } from "$lib/types/media";
+
+  function toMediaItem(item: WatchlistItem): MediaItem {
+    return {
+      id: item.id,
+      media_type: item.media_type as import("$lib/types/media").MediaType,
+      title: item.title,
+      overview: "", // No overview in watchlist DB
+      poster_path: item.poster ?? null,
+      backdrop_path: null,
+      vote_average: 0,
+      vote_count: 0,
+    };
+  }
+
   const filtered = $derived(
-    activeTab === 'all'
+    activeTab === "all"
       ? watchlist.items
-      : watchlist.items.filter(i => i.status === activeTab)
+      : watchlist.items.filter((i) => i.status === activeTab),
   );
 
   const counts: Record<FilterTab, number> = $derived({
     all: watchlist.items.length,
-    want: watchlist.items.filter(i => i.status === 'want').length,
-    watching: watchlist.items.filter(i => i.status === 'watching').length,
-    watched: watchlist.items.filter(i => i.status === 'watched').length,
+    want: watchlist.items.filter((i) => i.status === "want").length,
+    watching: watchlist.items.filter((i) => i.status === "watching").length,
+    watched: watchlist.items.filter((i) => i.status === "watched").length,
   });
 </script>
 
@@ -45,7 +62,8 @@
   <div class="watchlist-header">
     <h1 class="watchlist-title">Minha Lista</h1>
     <p class="watchlist-count">
-      {watchlist.items.length} {watchlist.items.length === 1 ? 'item' : 'itens'}
+      {watchlist.items.length}
+      {watchlist.items.length === 1 ? "item" : "itens"}
     </p>
   </div>
 
@@ -79,7 +97,7 @@
             {statusLabels[item.status]}
           </div>
           <MediaCard
-            {item}
+            item={toMediaItem(item)}
             onclick={() => goto(`/media/${item.media_type}/${item.id}`)}
           />
         </div>
@@ -90,9 +108,11 @@
       {#if watchlist.items.length === 0}
         <p class="empty-title">Sua lista está vazia</p>
         <p class="empty-sub">Explore filmes e séries e adicione à sua lista.</p>
-        <button class="empty-cta" onclick={() => goto('/')}>Explorar</button>
+        <button class="empty-cta" onclick={() => goto("/")}>Explorar</button>
       {:else}
-        <p class="empty-title">Nenhum item em "{tabs.find(t => t.key === activeTab)?.label}"</p>
+        <p class="empty-title">
+          Nenhum item em "{tabs.find((t) => t.key === activeTab)?.label}"
+        </p>
         <p class="empty-sub">Mude o status de um item ou escolha outra aba.</p>
       {/if}
     </div>
@@ -157,7 +177,10 @@
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: border-color $dur-fast, color $dur-fast, background $dur-fast;
+    transition:
+      border-color $dur-fast,
+      color $dur-fast,
+      background $dur-fast;
 
     &:hover:not(.active) {
       border-color: rgba(255, 255, 255, 0.1);
@@ -262,7 +285,9 @@
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background $dur-fast, border-color $dur-fast;
+    transition:
+      background $dur-fast,
+      border-color $dur-fast;
 
     &:hover {
       background: rgba($color-primary, 0.2);

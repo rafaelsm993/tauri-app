@@ -14,12 +14,12 @@ Tracks movies, TV series, anime, and books via TMDB, Jikan, and OpenLibrary.
 
 ## Stack
 
-| Layer     | Technology                          |
-|-----------|-------------------------------------|
-| Frontend  | SvelteKit + Svelte 5 runes          |
-| Styling   | SCSS + CSS custom properties        |
-| Backend   | Rust (Tauri 2 commands)             |
-| APIs      | TMDB, Jikan, OpenLibrary            |
+| Layer    | Technology                   |
+| -------- | ---------------------------- |
+| Frontend | SvelteKit + Svelte 5 runes   |
+| Styling  | SCSS + CSS custom properties |
+| Backend  | Rust (Tauri 2 commands)      |
+| APIs     | TMDB, Jikan, OpenLibrary     |
 
 ## Getting Started
 
@@ -37,10 +37,11 @@ npm run tauri dev
 ```bash
 npm run tauri build    # produces installers in src-tauri/target/release/bundle/
 ```
+
 ## Branch Model
 
 | Branch        | Purpose                              |
-|---------------|--------------------------------------|
+| ------------- | ------------------------------------ |
 | `main`        | Stable releases only (tagged)        |
 | `release/x.y` | Release candidate — fixes only       |
 | `dev`         | Integration — all features land here |
@@ -51,9 +52,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full workflow.
 
 ## Environment Variables
 
-| Variable        | Required | Description                  |
-|-----------------|----------|------------------------------|
-| `TMDB_API_KEY`  | Yes      | From themoviedb.org/settings |
+| Variable       | Required | Description                  |
+| -------------- | -------- | ---------------------------- |
+| `TMDB_API_KEY` | Yes      | From themoviedb.org/settings |
 
 ## License
 
