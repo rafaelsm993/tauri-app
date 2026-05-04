@@ -85,36 +85,11 @@ class WatchlistStore {
     isInWatchlist(id: string | number) {
         return this.items.some(i => i.id === String(id));
     }
-  }
 
     getStatus(id: string | number): WatchlistStatus | null {
         const found = this.items.find(i => i.id === String(id));
         return found ? found.status : null;
     }
-  }
-
-  async remove(id: number) {
-    this.items = this.items.filter(i => i.id !== id);
-    await this.persist();
-  }
-
-  async updateStatus(id: number, status: WatchlistStatus) {
-    this.items = this.items.map(i => i.id === id ? { ...i, status } : i);
-    await this.persist();
-  }
-
-  isInWatchlist(id: number): boolean {
-    return this.items.some(i => i.id === id);
-  }
-
-  getStatus(id: number): WatchlistStatus | null {
-    return this.items.find(i => i.id === id)?.status ?? null;
-  }
-
-  clear() {
-    this.items = [];
-    this.userId = null;
-  }
 }
 
 export const watchlist = new WatchlistStore();

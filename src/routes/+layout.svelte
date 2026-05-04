@@ -3,15 +3,19 @@
   import AppBackground from "$lib/components/ui/AppBackground.svelte";
   import UserButton from "$lib/components/ui/UserButton.svelte";
   import type { Snippet } from "svelte";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
+  import { userStore } from "$lib/stores/user.svelte";
+  import { watchlist } from "$lib/stores/watchlist.svelte";
 
   let { children } = $props<{ children: Snippet }>();
 
   // Auth guard
   $effect(() => {
-    if (!userStore.isLoggedIn && $page.url.pathname !== "/auth") {
+    if (!userStore.isLoggedIn && page.url.pathname !== "/auth") {
       goto("/auth", { replaceState: true });
     }
-    if (userStore.isLoggedIn && $page.url.pathname === "/auth") {
+    if (userStore.isLoggedIn && page.url.pathname === "/auth") {
       goto("/", { replaceState: true });
     }
   });
