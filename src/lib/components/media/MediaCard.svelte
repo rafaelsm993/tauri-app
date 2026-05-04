@@ -99,6 +99,7 @@
 
     <!-- WatchlistButton: outside aria-hidden overlay, shown on hover -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div class="card__wl-action" onclick={(e) => e.stopPropagation()}>
       <WatchlistButton {item} compact />
     </div>
