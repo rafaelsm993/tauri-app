@@ -1,5 +1,5 @@
 ---
-description: "Use when working on the TauriFlix Tauri 2 + SvelteKit SPA + Rust media app. Handles frontend Svelte 5 components, Rust backend commands, TMDB/Jikan/OpenLibrary API integration, SCSS design system, Tauri IPC invoke() pattern, stores, types, and the full-stack build pipeline. Triggers: Tauri, SvelteKit, Rust commands, media API, SCSS styling, watchlist, search, media detail, IPC, invoke, design system, component, route, page, store, type."
+description: "Use when working on the TauriFlix Tauri 2 + SvelteKit SPA + Rust media app. Handles frontend Svelte 5 components, Rust backend commands, TMDB/AniList/RAWG/iTunes API integration, SCSS design system, Tauri IPC invoke() pattern, stores, types, and the full-stack build pipeline. Triggers: Tauri, SvelteKit, Rust commands, media API, SCSS styling, watchlist, search, media detail, IPC, invoke, design system, component, route, page, store, type."
 tools: [read, edit, search, execute, todo, agent, web]
 model: "Claude Opus 4.6 (copilot)"
 ---
@@ -31,29 +31,32 @@ ALL SCSS variables (`$color-primary`, `$spacing-md`, etc.) and ALL mixins (`@inc
 
 - `adapter-static` with `fallback: "app.html"` in `svelte.config.js`.
 - `export const ssr = false` in root `+layout.ts`.
-- No server — all routing is client-side.
+- No SvelteKit server — all routing is client-side; an optional separate cloud server handles auth/watchlists.
 - HTML mount uses `<div style="display: contents">` — no `#app` or `#svelte` wrapper in DOM.
 
 ### Tauri IPC Pattern
 
-Frontend ↔ Rust communication is exclusively through `invoke()` from `@tauri-apps/api/core`.
+Frontend ↔ local Rust communication uses `invoke()` from `@tauri-apps/api/core`. Cloud auth/watchlist requests instead use `fetch()` in `src/lib/api/cloud.ts`.
 
-- **Frontend service** (`src/lib/api/*.ts`): wraps `invoke()` calls, maps raw JSON → typed TypeScript interfaces.
-- **Rust command** (`src-tauri/src/api/*.rs`): async fn, returns `Result<Value, String>`, registered in `lib.rs` via `tauri::generate_handler![]`.
+- **Media service** (`src/lib/api/{tmdb,anilist,rawg,itunes}.ts`): wraps `invoke()` calls, maps raw JSON → typed TypeScript interfaces.
+- **Rust media command**: async fn returning `Result<Value, String>`; local auth/watchlist commands return typed results (`AuthUser`, options/vectors, or unit). Commands are registered in `lib.rs` via `tauri::generate_handler![]`; scaffold `greet` is synchronous.
+- Auth selects cloud when `VITE_CLOUD_API_URL` is configured; watchlist CRUD requires both configuration and `userStore.isCloudUser`. This is backend selection, not offline synchronization; the bulk-sync client wrapper has no caller.
 
 ### Unified Type System
 
-All media providers (TMDB, Jikan, OpenLibrary) MUST map responses to shared types in `src/lib/types/media.ts`:
+All media providers (TMDB, AniList, RAWG, iTunes) MUST map responses to shared types in `src/lib/types/media.ts`:
 
 - `MediaItem` — list/grid card data
 - `MediaDetail` — full detail page data
 - `PaginatedResult<T>` — paginated response envelope
-- `Genre`, `CastMember`, `VideoClip` — detail sub-types
+- `Genre`, `CastMember`, `VideoClip` — detail sub-types; `GenreOption` / `GenreId` — filter types
+
+`Genre.id` currently declares `number`, while filter IDs allow `number | string`; AniList detail mapping emits string IDs, an existing contract mismatch to address explicitly rather than assume away.
 
 ### API Key Handling
 
-- `TMDB_API_KEY` loaded from `.env` at compile time via `build.rs` (`cargo:rustc-env`).
-- At runtime, `std::env::var("TMDB_API_KEY")` takes priority.
+- `TMDB_API_KEY` and `RAWG_API_KEY` must be defined at compile time; `build.rs` reads the root `.env` and emits `cargo:rustc-env`.
+- At runtime, `std::env::var()` for each key takes priority over its embedded value.
 - **NEVER** hardcode API keys. `.env` is gitignored.
 
 ### Stores — Svelte 5 Class-Based
@@ -79,12 +82,12 @@ Stores use Svelte 5 class-based pattern in `src/lib/stores/*.svelte.ts`. Follow 
 
 | Token      | Values                                                                      |
 | ---------- | --------------------------------------------------------------------------- |
-| Background | `#080b10`                                                                   |
-| Surface    | `#161d27`                                                                   |
-| Gold       | `#e8b84b`                                                                   |
-| Accent     | `#ff6b4a`                                                                   |
-| Teal       | `#3dd9c4`                                                                   |
-| Text       | `#eef0f5` / `#a8b0c0` / `#606878`                                           |
+| Background | `#000000` (`$color-bg-primary`)                                             |
+| Surface    | `#0a0a0a` (`$color-bg-secondary`)                                           |
+| Primary    | `#E50914` Netflix Red (`$color-primary`)                                    |
+| Accent     | `#B20710` dark red (`$color-accent`)                                        |
+| Green      | `#46D369` (`$color-teal`) — watchlist active / success                       |
+| Text       | `#F5F5F1` / `#B3B3B3` / `#808080` (`$color-text-main/-muted/-faint`)         |
 | Fonts      | Bebas Neue (display), DM Sans (body), DM Mono (mono)                        |
 | Spacing    | `$spacing-xs` 4px → `$spacing-2xl` 48px                                     |
 | Radii      | `$radius-sm` 4px → `$radius-full` 9999px                                    |
@@ -92,10 +95,12 @@ Stores use Svelte 5 class-based pattern in `src/lib/stores/*.svelte.ts`. Follow 
 
 ### Z-Index Stack
 
-- `.bg-layer` (z-index: 0) — Canvas 2D + CSS orbs
+- `.bg-layer` (z-index: 0) — CSS floating shapes, radial glows, and vignette
 - `.app-content` (z-index: 1) — page content
 - `body::before` (z-index: 4) — film grain overlay
 - Tokens: `--z-base: 1`, `--z-raised: 10`, `--z-overlay: 100`, `--z-modal: 200`, `--z-toast: 300`
+
+Legacy names `--clr-gold`, `--glow-gold`, and `@include glow-gold` now produce red; preserve these identifiers. Palette values come from `variables.scss` and `global.css`, not historical color names.
 
 ## Adding a New API Integration
 
@@ -134,7 +139,7 @@ Stores use Svelte 5 class-based pattern in `src/lib/stores/*.svelte.ts`. Follow 
 
 ### Rust Commands
 
-- Always `async fn`, return `Result<Value, String>`
+- Media commands use `async fn` and `Result<Value, String>`; follow typed return shapes for local auth/watchlist commands
 - Use `reqwest::Client::new()` for HTTP calls
 - Chain `.map_err(|e| e.to_string())?` for error propagation
 - Add `#[tauri::command]` attribute
@@ -143,9 +148,9 @@ Stores use Svelte 5 class-based pattern in `src/lib/stores/*.svelte.ts`. Follow 
 
 ### Frontend API Services
 
-- Import `invoke` from `@tauri-apps/api/core`
-- Export a named const object (e.g., `TmdbAPI`, `JikanAPI`) with method functions
-- Each method: `invoke<RawType>('command_name', { params }).then(r => mapFn(r))`
+- For local IPC services, import `invoke` from `@tauri-apps/api/core`; the cloud client uses `fetch`
+- Export a named const object (e.g., `TmdbAPI`, `AnilistAPI`) with method functions
+- Media IPC method pattern: `invoke<RawType>('command_name', { params }).then(r => mapFn(r))`
 - Private `map()` and `mapPage()` functions convert raw JSON → shared types
 - See `src/lib/api/tmdb.ts` as the canonical example
 
@@ -165,7 +170,7 @@ Stores use Svelte 5 class-based pattern in `src/lib/stores/*.svelte.ts`. Follow 
 
 ### Routes
 
-- Pages: `+page.svelte` with client-side data loading via `onMount`
+- Pages: `+page.svelte` with client-side data loading (`onMount` on home; `$effect` reacting to params on the detail route)
 - No `+page.server.ts`, no `+page.ts` load functions (SPA mode)
 - Navigation: `goto()` from `$app/navigation`
 
@@ -179,6 +184,6 @@ Stores use Svelte 5 class-based pattern in `src/lib/stores/*.svelte.ts`. Follow 
 - DO NOT use `on:click` / `on:input` — use Svelte 5 `onclick` / `oninput` syntax
 - DO NOT use `writable()` / `readable()` stores — use Svelte 5 class-based `$state` pattern
 - ALWAYS study existing file patterns before writing new code
-- ALWAYS register new Rust commands in both `mod.rs` and `lib.rs`
-- ALWAYS map API responses to shared types in `media.ts`
+- ALWAYS register new Rust modules in `mod.rs` and new commands in `lib.rs`
+- ALWAYS map media API responses to shared types in `media.ts`
 - ALWAYS run validation after changes (`npm run check` or `cargo check`)
