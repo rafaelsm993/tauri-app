@@ -1,16 +1,10 @@
-# Tauri + SvelteKit + TypeScript
-
-This template should help get you started developing with Tauri, SvelteKit and TypeScript in Vite.
-
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
-
 # TauriFlix
 
 A cross-platform media tracker built with **Tauri 2**, **SvelteKit**, and **Rust**.
 
-Tracks movies, TV series, anime, and books via TMDB, Jikan, and OpenLibrary.
+Tracks movies, TV series, anime, manga, books, and games via TMDB, AniList, RAWG, and iTunes, with local accounts and per-user watchlists or an optional cloud backend.
+
+See [Project review and feature overview](docs/PROJECT_REVIEW.md) for the implementation inventory, validation results, and known limitations.
 
 ## Stack
 
@@ -19,7 +13,7 @@ Tracks movies, TV series, anime, and books via TMDB, Jikan, and OpenLibrary.
 | Frontend | SvelteKit + Svelte 5 runes   |
 | Styling  | SCSS + CSS custom properties |
 | Backend  | Rust (Tauri 2 commands)      |
-| APIs     | TMDB, Jikan, OpenLibrary     |
+| APIs     | TMDB, AniList, RAWG, iTunes |
 
 ## Getting Started
 
@@ -29,6 +23,7 @@ Tracks movies, TV series, anime, and books via TMDB, Jikan, and OpenLibrary.
 git clone https://github.com/rafaelsm993/tauri-app
 cd tauri-app
 npm install
+# Configure the environment variables below before compiling
 npm run tauri dev
 ```
 
@@ -54,7 +49,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full workflow.
 
 | Variable       | Required | Description                  |
 | -------------- | -------- | ---------------------------- |
-| `TMDB_API_KEY` | Yes      | From themoviedb.org/settings |
+| `TMDB_API_KEY` | Yes      | Must be defined at Rust compile time; valid key needed for movies/TV |
+| `RAWG_API_KEY` | Yes      | Must be defined at Rust compile time; valid key needed for games |
+| `VITE_CLOUD_API_URL` | No | Base URL of the optional auth/watchlist server, read by Vite at dev/build time |
+
+Set these in a project-root `.env` before starting development or building. Rust keys are embedded at compile time and can be overridden by runtime environment variables. AniList and iTunes require no API key.
+
+Without a cloud URL, accounts and watchlists use local SQLite. When configured, login/registration use the cloud HTTP client; cloud-user watchlist operations use that backend too. Media requests still go through Rust. This selects a persistence backend; it does not implement offline synchronization or migrate local data to the cloud.
 
 ## License
 
