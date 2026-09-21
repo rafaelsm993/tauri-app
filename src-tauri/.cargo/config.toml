@@ -1,0 +1,16 @@
+# src-tauri/.cargo/config.toml
+# Windows-native build settings for TauriFlix.
+# The MSVC toolchain is the only supported target on this machine; see docs/BUILD_AND_RUN.md.
+
+[build]
+# Keep the (large) incremental artefacts on the same NTFS volume as the source.
+# Do NOT relocate this to a WSL ext4 path: cargo.exe would then write across the
+# 9p bridge and every rebuild would slow down instead of speeding up.
+target-dir = "target"
+
+[target.x86_64-pc-windows-msvc]
+# /INCREMENTAL speeds up relinking of the 20 MB debug binary.
+rustflags = ["-C", "link-arg=/INCREMENTAL"]
+
+[net]
+git-fetch-with-cli = true
