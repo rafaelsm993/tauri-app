@@ -22,5 +22,8 @@ $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\Program Files\nodejs;$env:PATH"
 
 if (-not (Test-Path ".env")) { throw ".env is missing; build.rs needs TMDB_API_KEY and RAWG_API_KEY." }
 
-npm run tauri build -- --bundles msi,nsis
+# Call the Tauri CLI directly. The npm .cmd shim on Windows mangles the
+# forwarded --bundles argument and leaks it to cargo instead.
+node node_modules\@tauri-apps\cli\tauri.js build --bundles msi,nsis
+if ($LASTEXITCODE -ne 0) { throw "tauri build failed with exit code $LASTEXITCODE" }
 Write-Host "Bundles written to src-tauri\target\release\bundle\"
