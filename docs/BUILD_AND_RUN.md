@@ -36,7 +36,7 @@ the stutter this setup avoids. The Windows toolchain already produced a working 
 Verify all of it at once:
 
 ```
-PS> node scripts\verify-toolchain.test.mjs
+PS> powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
 ```
 
 ## Daily workflow
@@ -53,6 +53,9 @@ PS> node scripts\verify-toolchain.test.mjs
 
 - `src-tauri/Cargo.toml` sets `[profile.dev.package."*"] opt-level = 3`. Dependencies are optimised while
   our own crate stays debuggable. This removes dev-mode UI stutter; the cost is one long first build.
+- Measured baselines on this machine (22 threads, warm NTFS target dir):
+  - one-time full dependency rebuild after the profile change: **5m 18s**
+  - warm incremental rebuild after touching `src-tauri/src/lib.rs`: **7.68s**
 - `[profile.dev] debug = 1` + `codegen-units = 256` + `/INCREMENTAL` keep relinks of the ~20 MB debug
   binary fast.
 - `src-tauri/.cargo/config.toml` pins `target-dir = "target"`. **Do not** move it to a WSL ext4 path —
