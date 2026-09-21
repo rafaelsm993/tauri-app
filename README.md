@@ -6,6 +6,8 @@ Tracks movies, TV series, anime, manga, books, and games via TMDB, AniList, RAWG
 
 See [Project review and feature overview](docs/PROJECT_REVIEW.md) for the implementation inventory, validation results, and known limitations.
 
+Build and run on WSL + Windows 11: see [Build and run runbook](docs/BUILD_AND_RUN.md).
+
 ## Stack
 
 | Layer    | Technology                   |
