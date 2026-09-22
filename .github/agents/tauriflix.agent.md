@@ -1,5 +1,5 @@
 ---
-description: "Use when working on the TauriFlix Tauri 2 + SvelteKit SPA + Rust media app. Handles frontend Svelte 5 components, Rust backend commands, TMDB/AniList/RAWG/iTunes API integration, SCSS design system, Tauri IPC invoke() pattern, stores, types, and the full-stack build pipeline. Triggers: Tauri, SvelteKit, Rust commands, media API, SCSS styling, watchlist, search, media detail, IPC, invoke, design system, component, route, page, store, type."
+description: "Use when working on the TauriFlix Tauri 2 + SvelteKit SPA + Rust media app. Handles frontend Svelte 5 components, Rust backend commands, TMDB/AniList/RAWG/iTunes API integration, SCSS design system, Tauri IPC invoke() pattern, stores, types, and the full-stack build pipeline. Triggers: Tauri, SvelteKit, Rust commands, media API, SCSS styling, search, media detail, IPC, invoke, design system, component, route, page, store, type."
 tools: [read, edit, search, execute, todo, agent, web]
 model: "Claude Opus 4.6 (copilot)"
 ---
@@ -31,16 +31,15 @@ ALL SCSS variables (`$color-primary`, `$spacing-md`, etc.) and ALL mixins (`@inc
 
 - `adapter-static` with `fallback: "app.html"` in `svelte.config.js`.
 - `export const ssr = false` in root `+layout.ts`.
-- No SvelteKit server — all routing is client-side; an optional separate cloud server handles auth/watchlists.
+- No SvelteKit server — all routing is client-side. The app has exactly two screens: the home list and the media detail page.
 - HTML mount uses `<div style="display: contents">` — no `#app` or `#svelte` wrapper in DOM.
 
 ### Tauri IPC Pattern
 
-Frontend ↔ local Rust communication uses `invoke()` from `@tauri-apps/api/core`. Cloud auth/watchlist requests instead use `fetch()` in `src/lib/api/cloud.ts`.
+Frontend ↔ local Rust communication uses `invoke()` from `@tauri-apps/api/core`. The Rust backend is a stateless proxy to the media APIs; there is no database and no user state.
 
 - **Media service** (`src/lib/api/{tmdb,anilist,rawg,itunes}.ts`): wraps `invoke()` calls, maps raw JSON → typed TypeScript interfaces.
-- **Rust media command**: async fn returning `Result<Value, String>`; local auth/watchlist commands return typed results (`AuthUser`, options/vectors, or unit). Commands are registered in `lib.rs` via `tauri::generate_handler![]`; scaffold `greet` is synchronous.
-- Auth selects cloud when `VITE_CLOUD_API_URL` is configured; watchlist CRUD requires both configuration and `userStore.isCloudUser`. This is backend selection, not offline synchronization; the bulk-sync client wrapper has no caller.
+- **Rust media command**: async fn returning `Result<Value, String>`. Commands are registered in `lib.rs` via `tauri::generate_handler![]`.
 
 ### Unified Type System
 
@@ -61,7 +60,7 @@ All media providers (TMDB, AniList, RAWG, iTunes) MUST map responses to shared t
 
 ### Stores — Svelte 5 Class-Based
 
-Stores use Svelte 5 class-based pattern in `src/lib/stores/*.svelte.ts`. Follow existing patterns (`UIStore`, `WatchlistStore`).
+Stores use Svelte 5 class-based pattern in `src/lib/stores/*.svelte.ts`. Follow the existing pattern (`UIStore`).
 
 ## File Organization
 
@@ -86,7 +85,7 @@ Stores use Svelte 5 class-based pattern in `src/lib/stores/*.svelte.ts`. Follow 
 | Surface    | `#0a0a0a` (`$color-bg-secondary`)                                           |
 | Primary    | `#E50914` Netflix Red (`$color-primary`)                                    |
 | Accent     | `#B20710` dark red (`$color-accent`)                                        |
-| Green      | `#46D369` (`$color-teal`) — watchlist active / success                       |
+| Green      | `#46D369` (`$color-teal`) — success                       |
 | Text       | `#F5F5F1` / `#B3B3B3` / `#808080` (`$color-text-main/-muted/-faint`)         |
 | Fonts      | Bebas Neue (display), DM Sans (body), DM Mono (mono)                        |
 | Spacing    | `$spacing-xs` 4px → `$spacing-2xl` 48px                                     |
@@ -139,7 +138,7 @@ Legacy names `--clr-gold`, `--glow-gold`, and `@include glow-gold` now produce r
 
 ### Rust Commands
 
-- Media commands use `async fn` and `Result<Value, String>`; follow typed return shapes for local auth/watchlist commands
+- Media commands use `async fn` and `Result<Value, String>`
 - Use `reqwest::Client::new()` for HTTP calls
 - Chain `.map_err(|e| e.to_string())?` for error propagation
 - Add `#[tauri::command]` attribute
@@ -159,7 +158,7 @@ Legacy names `--clr-gold`, `--glow-gold`, and `@include glow-gold` now produce r
 - Class with `$state` fields and methods, exported as singleton instance
 - File extension: `.svelte.ts`
 - No decorators, no `writable()`/`readable()` — pure Svelte 5 runes
-- See `src/lib/stores/ui.svelte.ts` and `watchlist.svelte.ts`
+- See `src/lib/stores/ui.svelte.ts`
 
 ### Components
 

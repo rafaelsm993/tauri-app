@@ -29,3 +29,5 @@ Thumbs.db
 .vscode/settings.json
 .idea/
 *.iml
+# ── Local SQLite databases (no longer used by the app) ────
+*.db

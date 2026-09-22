@@ -1,5 +1,9 @@
 # TauriFlix — Project Review
 
+> **Stale as of the Home+Detail cleanup.** Sections covering authentication,
+> the watchlist, cloud sync, and the SQLite layer describe code that has been
+> removed. Command counts and file inventories predate that change.
+
 > Reviewed 2026-09-14. Application source snapshot: `eb3f1bf27456d193136db095cd13bacda9088c7e` (`server connection logic`, 2026-05-02). Review branch: `docs/project-review-2026-09`.
 >
 > This is a review of the checked-out application, not every branch tip or the companion server. Existing refs include later commits such as `48813eb` and `1e45547`; they were not merged into this snapshot. Production source, configuration, databases and the Obsidian vault were not modified by this review.

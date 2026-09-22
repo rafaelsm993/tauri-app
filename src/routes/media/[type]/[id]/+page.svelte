@@ -8,7 +8,6 @@
   import { RawgAPI } from "$lib/api/rawg";
   import type { MediaDetail } from "$lib/types/media";
   import { ui } from "$lib/stores/ui.svelte";
-  import WatchlistButton from "$lib/components/ui/WatchlistButton.svelte";
 
   let detail = $state<MediaDetail | null>(null);
   let loading = $state(true);
@@ -197,9 +196,6 @@
     <div class="hero-content">
       <button class="back-btn" onclick={() => goto("/")}>← Voltar</button>
       <h1 class="hero-title">{detail.title}</h1>
-      <div style="margin-top: 12px;">
-        <WatchlistButton item={detail} />
-      </div>
       {#if detail.tagline}
         <p class="hero-tagline">{detail.tagline}</p>
       {/if}

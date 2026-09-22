@@ -6,7 +6,6 @@
     getRating,
     MEDIA_LABELS,
   } from "$lib/types/media";
-  import WatchlistButton from "$lib/components/ui/WatchlistButton.svelte";
 
   let { item, onclick } = $props<{
     item: MediaItem;
@@ -103,36 +102,9 @@
     <span class="card__label-title">{item.title}</span>
     {#if year}<span class="card__label-year">{year}</span>{/if}
   </div>
-
-  <!-- WatchlistButton: floating action, shown on hover -->
-  <div
-    class="card__wl-action"
-    tabindex="0"
-    role="button"
-    aria-label="Minha Lista"
-    onclick={(e) => e.stopPropagation()}
-    onkeydown={(e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        e.stopPropagation();
-        // Optionally, focus the WatchlistButton or open dropdown
-      }
-    }}
-  >
-    <WatchlistButton {item} compact />
-  </div>
 </button>
 
 <style lang="scss">
-  // ── WatchlistButton container ────────────────────────────
-  .card__wl-action {
-    position: absolute;
-    bottom: $spacing-sm;
-    right: $spacing-sm;
-    z-index: 10;
-    opacity: 1;
-    transition: opacity $dur-normal $ease-out-expo;
-  }
 
   // ── Card shell ──────────────────────────────────────────
   .card {
