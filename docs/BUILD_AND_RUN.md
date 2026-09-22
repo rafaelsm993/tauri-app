@@ -30,7 +30,7 @@ the stutter this setup avoids. The Windows toolchain already produced a working 
 - Rust via rustup, host triple `x86_64-pc-windows-msvc` (cargo/rustc 1.93.1).
 - Node.js (`C:\Program Files\nodejs`, currently v22.15.1).
 - Microsoft Edge WebView2 Runtime (already present, 153.x).
-- A repo-root `.env` containing `TMDB_API_KEY`, `RAWG_API_KEY`, `VITE_CLOUD_API_URL`.
+- A repo-root `.env` containing `TMDB_API_KEY` and `RAWG_API_KEY`.
   `src-tauri/build.rs` reads `../.env` and re-exports each key via `cargo:rustc-env`.
 
 Verify all of it at once:

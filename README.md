@@ -8,6 +8,8 @@ See [Project review and feature overview](docs/PROJECT_REVIEW.md) for the implem
 
 Build and run on WSL + Windows 11: see [Build and run runbook](docs/BUILD_AND_RUN.md).
 
+Architecture, API, component and design-system notes: see [Design notes](docs/notes/README.md).
+
 ## Stack
 
 | Layer    | Technology                   |
