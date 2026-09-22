@@ -1,11 +1,29 @@
-# Building and running TauriFlix from WSL Arch on Windows 11
+# Building and running TauriFlix
 
-## TL;DR
+| Machine | Run (hot reload) | Release | Toolchain check |
+| --- | --- | --- | --- |
+| Arch desktop (native Linux) | `npm run tauri dev` | `npm run tauri build -- --no-bundle` | `node --test scripts/verify-toolchain.test.mjs` |
+| Windows 11 laptop (edit in WSL) | `./scripts/wdev.sh` | `./scripts/wdev.sh build` | `PS> powershell -ExecutionPolicy Bypass -File scripts\verify.ps1` |
+
+`src-tauri/target/`, `node_modules/` and `.env` are per machine, never shared or committed.
+
+## Linux native (Arch desktop)
+
+One-time setup:
 
 ```
-WSL$ ./scripts/wdev.sh          # dev mode, hot reload
-WSL$ ./scripts/wdev.sh build    # release MSI + NSIS bundles
+sudo pacman -S --needed rustup webkit2gtk-4.1 libsoup3 base-devel openssl librsvg
+rustup default stable
+cp .env.example .env        # then fill in TMDB_API_KEY and RAWG_API_KEY
+npm ci                      # not `npm install`: keeps the shared lockfile unchanged
+node --test scripts/verify-toolchain.test.mjs   # expect: # pass 8, # skipped 3
 ```
+
+- `npm run tauri build -- --no-bundle` → `src-tauri/target/release/tauri-app`. No .deb/AppImage; run the binary directly.
+- Wayland: if the window is blank/white, `env WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run tauri dev`
+  (last resort: add `GDK_BACKEND=x11`).
+
+## Windows laptop (WSL → Windows)
 
 Edit code in WSL. Build and run on Windows. One shared NTFS working tree, no sync step.
 
@@ -102,3 +120,6 @@ verifying Linux-specific behaviour, never for day-to-day development on this mac
 | `Port 1420 is already in use`                | stale Vite process           | kill the owning PID (see above)                  |
 | `Cannot find module @rollup/rollup-win32-x64-msvc` | cross-platform npm prune | reinstall from Windows                       |
 | Blank media grid, 401s                       | `.env` keys missing at compile time | confirm `.env`, then rebuild (`build.rs` bakes them in) |
+| `bad interpreter: /usr/bin/env: 'bash\r'`    | script checked out with CRLF | `.gitattributes` forces LF; re-checkout: `git checkout -- scripts/wdev.sh` |
+| Blank/white window on Arch (Wayland)         | WebKitGTK DMA-BUF renderer   | `env WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run tauri dev` |
+| `TMDB_API_KEY not defined at compile time`   | no `.env` on this machine    | `cp .env.example .env`, fill in keys, rebuild    |

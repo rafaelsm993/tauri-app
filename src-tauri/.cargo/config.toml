@@ -1,6 +1,6 @@
 # src-tauri/.cargo/config.toml
-# Windows-native build settings for TauriFlix.
-# The MSVC toolchain is the only supported target on this machine; see docs/BUILD_AND_RUN.md.
+# Build settings shared by both machines (see docs/BUILD_AND_RUN.md).
+# The MSVC-only flags below are target-scoped and ignored by the Linux build.
 
 [build]
 # Keep the (large) incremental artefacts on the same NTFS volume as the source.

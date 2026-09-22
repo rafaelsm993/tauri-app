@@ -6,7 +6,7 @@ Tracks movies, TV series, anime, manga, books, and games via TMDB, AniList, RAWG
 
 See [Project review and feature overview](docs/PROJECT_REVIEW.md) for the implementation inventory, validation results, and known limitations.
 
-Build and run on WSL + Windows 11: see [Build and run runbook](docs/BUILD_AND_RUN.md).
+Build and run on the Arch desktop or on WSL + Windows 11: see [Build and run runbook](docs/BUILD_AND_RUN.md).
 
 Architecture, API, component and design-system notes: see [Design notes](docs/notes/README.md).
 
@@ -26,15 +26,16 @@ Architecture, API, component and design-system notes: see [Design notes](docs/no
 
 git clone https://github.com/rafaelsm993/tauri-app
 cd tauri-app
-npm install
-# Configure the environment variables below before compiling
-npm run tauri dev
+npm ci
+cp .env.example .env   # fill in TMDB_API_KEY and RAWG_API_KEY
+npm run tauri dev      # Arch desktop; on the Windows laptop use ./scripts/wdev.sh from WSL
 ```
 
 ## Building
 
 ```bash
-npm run tauri build    # produces installers in src-tauri/target/release/bundle/
+npm run tauri build -- --no-bundle   # Arch: binary at src-tauri/target/release/tauri-app
+./scripts/wdev.sh build              # Windows laptop (from WSL): MSI + NSIS in src-tauri/target/release/bundle/
 ```
 
 ## Branch Model
@@ -56,7 +57,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full workflow.
 | `TMDB_API_KEY` | Yes      | Must be defined at Rust compile time; valid key needed for movies/TV |
 | `RAWG_API_KEY` | Yes      | Must be defined at Rust compile time; valid key needed for games |
 
-Set these in a project-root `.env` before starting development or building. Rust keys are embedded at compile time and can be overridden by runtime environment variables. AniList and iTunes require no API key.
+Copy `.env.example` to `.env` at the project root and fill these in before starting development or building. Rust keys are embedded at compile time and can be overridden by runtime environment variables. AniList and iTunes require no API key.
 
 ## License
 

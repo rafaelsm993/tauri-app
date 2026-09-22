@@ -96,7 +96,7 @@ Build profiles (the reasoning is in [BUILD_AND_RUN.md](../BUILD_AND_RUN.md)):
 | RAWG | `api.rawg.io/api` | `RAWG_API_KEY` | Games |
 | iTunes | `itunes.apple.com` | none | Books |
 
-Repo-root `.env` (gitignored; there is no `.env.example` yet):
+Repo-root `.env` (gitignored; template: `.env.example`):
 
 ```env
 TMDB_API_KEY=...
@@ -109,10 +109,10 @@ Both keys must be present at compile time, because `env!()` fails the build othe
 
 - Node.js ≥ 20 (Windows side currently v22)
 - Rust stable via rustup
-- **Windows, the supported path on this machine:** VS Build Tools with the C++ workload, the MSVC Rust target, and the WebView2 runtime. Details and `scripts/verify.ps1` are in [BUILD_AND_RUN.md](../BUILD_AND_RUN.md).
+- **Windows laptop (WSL → Windows):** VS Build Tools with the C++ workload, the MSVC Rust target, and the WebView2 runtime. Details and `scripts/verify.ps1` are in [BUILD_AND_RUN.md](../BUILD_AND_RUN.md).
 - **Linux native:**
   - Ubuntu: `libwebkit2gtk-4.1-dev build-essential libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev pkg-config`
-  - Arch: `webkit2gtk-4.1 libappindicator-gtk3 librsvg patchelf`
+  - Arch: `rustup webkit2gtk-4.1 libsoup3 base-devel openssl librsvg`. Setup and troubleshooting: [BUILD_AND_RUN.md](../BUILD_AND_RUN.md).
 - See also the official [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
 
 ## How it connects

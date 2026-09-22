@@ -1,9 +1,8 @@
 // scripts/verify-toolchain.test.mjs
-// Verifies the Windows-native build prerequisites for TauriFlix.
-// Run from the repo root with the WINDOWS node:
-//   PS> node scripts\verify-toolchain.test.mjs
-// or from WSL:
-//   WSL$ '/mnt/c/Program Files/nodejs/node.exe' scripts/verify-toolchain.test.mjs
+// Verifies the build prerequisites for TauriFlix on whichever machine runs it.
+//   Windows laptop:  PS> powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
+//   Arch desktop:    $ node --test scripts/verify-toolchain.test.mjs
+// Windows-only checks are skipped on Linux and vice versa.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -14,37 +13,30 @@ import { dirname, join, resolve } from "node:path";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(repoRoot, p), "utf8");
 const has = (p) => existsSync(join(repoRoot, p));
+const WIN = process.platform === "win32";
+const LINUX = process.platform === "linux";
 
 function run(cmd, args) {
   return execFileSync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 }
 
+// ── Both machines ─────────────────────────────────────────
 test("cargo is reachable and reports a stable version", () => {
   const out = run("cargo", ["--version"]);
   assert.match(out, /^cargo \d+\.\d+\.\d+/, `unexpected cargo version line: ${out}`);
 });
 
-test("the active rust toolchain targets x86_64-pc-windows-msvc", () => {
-  const out = run("rustc", ["-vV"]);
-  assert.match(out, /host: x86_64-pc-windows-msvc/, `rustc is not MSVC-hosted:\n${out}`);
-});
-
-test("the MSVC linker is on PATH", () => {
-  const out = run("cmd", ["/c", "where", "link.exe"]);
-  assert.match(out, /link\.exe/i, `link.exe not found on PATH:\n${out}`);
-});
-
-test("a WebView2 runtime is installed", () => {
-  const base = "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application";
-  assert.ok(existsSync(base), `WebView2 runtime directory missing: ${base}`);
-});
-
 test(".env supplies the compile-time API keys build.rs expects", () => {
-  assert.ok(has(".env"), ".env is missing at the repo root");
+  assert.ok(has(".env"), ".env is missing at the repo root (copy .env.example)");
   const env = read(".env");
   for (const key of ["TMDB_API_KEY", "RAWG_API_KEY"]) {
     assert.match(env, new RegExp(`^${key}=.+$`, "m"), `.env has no non-empty ${key}`);
   }
+});
+
+test("the Tauri CLI native binary for this platform is installed", () => {
+  const pkg = WIN ? "@tauri-apps/cli-win32-x64-msvc" : "@tauri-apps/cli-linux-x64-gnu";
+  assert.ok(has(`node_modules/${pkg}`), `node_modules/${pkg} missing — install dependencies on this machine`);
 });
 
 test("cargo dev profile is tuned for fast links and smooth runtime", () => {
@@ -65,9 +57,38 @@ test("the Windows launcher scripts exist", () => {
   }
 });
 
-test("the build/run runbook is documented", () => {
+test("the build/run runbook covers both machines", () => {
   assert.ok(has("docs/BUILD_AND_RUN.md"), "docs/BUILD_AND_RUN.md is missing");
   const doc = read("docs/BUILD_AND_RUN.md");
   assert.match(doc, /x86_64-pc-windows-msvc/, "runbook does not name the MSVC target");
   assert.match(doc, /WSLg/, "runbook does not discuss the WSLg fallback");
+  assert.match(doc, /## Linux native/, "runbook has no Linux-native section");
+});
+
+// ── Windows laptop only ───────────────────────────────────
+test("the active rust toolchain targets x86_64-pc-windows-msvc", { skip: !WIN }, () => {
+  const out = run("rustc", ["-vV"]);
+  assert.match(out, /host: x86_64-pc-windows-msvc/, `rustc is not MSVC-hosted:\n${out}`);
+});
+
+test("the MSVC linker is on PATH", { skip: !WIN }, () => {
+  const out = run("cmd", ["/c", "where", "link.exe"]);
+  assert.match(out, /link\.exe/i, `link.exe not found on PATH:\n${out}`);
+});
+
+test("a WebView2 runtime is installed", { skip: !WIN }, () => {
+  const base = "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application";
+  assert.ok(existsSync(base), `WebView2 runtime directory missing: ${base}`);
+});
+
+// ── Arch desktop (native Linux) only ──────────────────────
+test("the active rust toolchain targets x86_64-unknown-linux-gnu", { skip: !LINUX }, () => {
+  const out = run("rustc", ["-vV"]);
+  assert.match(out, /host: x86_64-unknown-linux-gnu/, `rustc is not linux-gnu-hosted:\n${out}`);
+});
+
+test("WebKitGTK 4.1 stack is visible to pkg-config", { skip: !LINUX }, () => {
+  for (const mod of ["webkit2gtk-4.1", "javascriptcoregtk-4.1", "libsoup-3.0", "gtk+-3.0"]) {
+    assert.doesNotThrow(() => run("pkg-config", ["--exists", mod]), `pkg-config cannot find ${mod}`);
+  }
 });
