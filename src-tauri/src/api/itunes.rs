@@ -14,9 +14,11 @@ const PAGE_SIZE: u32 = 20;
 // the `genre` argument (e.g. "romance", "fantasia", "mistério").
 #[tauri::command]
 pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Result<Value, String> {
-    eprintln!(
+    log::info!(
         "[itunes] search  query={:?} page={} genre={:?}",
-        query, page, genre
+        query,
+        page,
+        genre
     );
     let trimmed = query.trim();
     let has_query = !trimmed.is_empty() && trimmed != "popular";
@@ -43,14 +45,14 @@ pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Res
         .send()
         .await
         .map_err(|e| {
-            eprintln!("[itunes] ERROR: {e}");
+            log::error!("[itunes] ERROR: {e}");
             e.to_string()
         })?
         .json::<Value>()
         .await
         .map_err(|e| e.to_string())?;
 
-    eprintln!(
+    log::info!(
         "[itunes] search → {} results (term={:?})",
         res["resultCount"].as_u64().unwrap_or(0),
         term
@@ -63,14 +65,14 @@ pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Res
 // /lookup is brittle when combined with media=ebook.
 #[tauri::command]
 pub async fn itunes_details(id: &str) -> Result<Value, String> {
-    eprintln!("[itunes] details  id={}", id);
+    log::info!("[itunes] details  id={}", id);
     let res = http()
         .get(format!("{BASE}/lookup"))
         .query(&[("id", id)])
         .send()
         .await
         .map_err(|e| {
-            eprintln!("[itunes] ERROR: {e}");
+            log::error!("[itunes] ERROR: {e}");
             e.to_string()
         })?
         .json::<Value>()
@@ -84,6 +86,6 @@ pub async fn itunes_details(id: &str) -> Result<Value, String> {
         .cloned()
         .ok_or_else(|| "Livro não encontrado.".to_string())?;
 
-    eprintln!("[itunes] details → name={:?}", first.get("trackName"));
+    log::info!("[itunes] details → name={:?}", first.get("trackName"));
     Ok(first)
 }

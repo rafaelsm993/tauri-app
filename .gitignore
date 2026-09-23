@@ -48,3 +48,6 @@ docs/sprints/
 
 # Planning history — kept locally, hidden from the public repo
 .hermes/plans/
+
+# Local Obsidian vault config if docs/ is opened as a vault — editor-local, never shared
+.obsidian/

@@ -10,7 +10,7 @@ const config = {
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter({
-      fallback: "app.html",
+      fallback: "index.html",
     }),
   },
 };

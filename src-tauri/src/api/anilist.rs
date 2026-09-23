@@ -83,7 +83,7 @@ async fn graphql(query: &str, variables: Value) -> Result<Value, String> {
         .send()
         .await
         .map_err(|e| {
-            eprintln!("[anilist] ERROR: {e}");
+            log::error!("[anilist] ERROR: {e}");
             e.to_string()
         })?
         .json::<Value>()
@@ -162,16 +162,18 @@ pub async fn anilist_search_anime(
     page: u32,
     genre: Option<String>,
 ) -> Result<Value, String> {
-    eprintln!(
+    log::info!(
         "[anilist] search_anime  query={:?} page={} genre={:?}",
-        query, page, genre
+        query,
+        page,
+        genre
     );
     run_list("ANIME", query, page, genre).await
 }
 
 #[tauri::command]
 pub async fn anilist_anime_details(id: u32) -> Result<Value, String> {
-    eprintln!("[anilist] anime_details  id={}", id);
+    log::info!("[anilist] anime_details  id={}", id);
     let res = graphql(&detail_query(), json!({ "id": id })).await?;
     res.get("data")
         .and_then(|d| d.get("Media"))
@@ -186,16 +188,18 @@ pub async fn anilist_search_manga(
     page: u32,
     genre: Option<String>,
 ) -> Result<Value, String> {
-    eprintln!(
+    log::info!(
         "[anilist] search_manga  query={:?} page={} genre={:?}",
-        query, page, genre
+        query,
+        page,
+        genre
     );
     run_list("MANGA", query, page, genre).await
 }
 
 #[tauri::command]
 pub async fn anilist_manga_details(id: u32) -> Result<Value, String> {
-    eprintln!("[anilist] manga_details  id={}", id);
+    log::info!("[anilist] manga_details  id={}", id);
     let res = graphql(&detail_query(), json!({ "id": id })).await?;
     res.get("data")
         .and_then(|d| d.get("Media"))
@@ -207,7 +211,7 @@ pub async fn anilist_manga_details(id: u32) -> Result<Value, String> {
 // AniList exposes a single `GenreCollection` shared by anime and manga.
 #[tauri::command]
 pub async fn anilist_genres() -> Result<Value, String> {
-    eprintln!("[anilist] genres");
+    log::info!("[anilist] genres");
     let res = graphql("query { GenreCollection }", json!({})).await?;
     Ok(res
         .get("data")

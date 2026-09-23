@@ -21,7 +21,7 @@ fn total_pages(total: u32, page: u32) -> u32 {
 // Default ordering is "popularity desc". Page size 20 to match other providers.
 #[tauri::command]
 pub async fn rawg_discover(page: u32, genre: Option<String>) -> Result<Value, String> {
-    eprintln!("[rawg] discover  page={} genre={:?}", page, genre);
+    log::info!("[rawg] discover  page={} genre={:?}", page, genre);
     let key = api_key();
     let p = page.to_string();
     let page_size = PAGE_SIZE.to_string();
@@ -40,7 +40,10 @@ pub async fn rawg_discover(page: u32, genre: Option<String>) -> Result<Value, St
         .send()
         .await
         .map_err(|e| {
-            eprintln!("[rawg] ERROR: {e}");
+            log::error!(
+                "[rawg] ERROR: {}",
+                crate::logging::redact(&e.to_string(), &key)
+            );
             e.to_string()
         })?
         .json::<Value>()
@@ -61,9 +64,11 @@ pub async fn rawg_discover(page: u32, genre: Option<String>) -> Result<Value, St
 // ── SEARCH ─────────────────────────────────────────────────
 #[tauri::command]
 pub async fn rawg_search(query: &str, page: u32, genre: Option<String>) -> Result<Value, String> {
-    eprintln!(
+    log::info!(
         "[rawg] search  query={:?} page={} genre={:?}",
-        query, page, genre
+        query,
+        page,
+        genre
     );
     let key = api_key();
     let p = page.to_string();
@@ -102,7 +107,7 @@ pub async fn rawg_search(query: &str, page: u32, genre: Option<String>) -> Resul
 // ── GENRES ─────────────────────────────────────────────────
 #[tauri::command]
 pub async fn rawg_genres() -> Result<Value, String> {
-    eprintln!("[rawg] genres");
+    log::info!("[rawg] genres");
     let key = api_key();
     let res = http()
         .get(format!("{BASE}/genres"))
@@ -122,7 +127,7 @@ pub async fn rawg_genres() -> Result<Value, String> {
 // and merge the screenshots into the detail payload.
 #[tauri::command]
 pub async fn rawg_details(id: u32) -> Result<Value, String> {
-    eprintln!("[rawg] details  id={}", id);
+    log::info!("[rawg] details  id={}", id);
     let key = api_key();
     let client = http();
 
@@ -155,7 +160,7 @@ pub async fn rawg_details(id: u32) -> Result<Value, String> {
         }
     }
 
-    eprintln!("[rawg] details → name={:?}", detail.get("name"));
+    log::info!("[rawg] details → name={:?}", detail.get("name"));
     Ok(detail)
 }
 

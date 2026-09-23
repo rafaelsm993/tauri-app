@@ -1,4 +1,5 @@
 pub mod api;
+pub mod logging;
 
 #[cfg(debug_assertions)]
 use tauri::Manager;
@@ -14,6 +15,20 @@ fn devtools_requested(value: Option<&str>) -> bool {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(logging::level_from_env(
+                    std::env::var("TAURI_APP_LOG").ok().as_deref(),
+                ))
+                .targets([
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
+                        file_name: None,
+                    }),
+                ])
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .setup(|_app| {
             #[cfg(debug_assertions)]

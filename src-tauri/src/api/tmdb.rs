@@ -14,7 +14,7 @@ fn api_key() -> String {
 // /discover/movie endpoint with `with_genres`; otherwise we use /movie/popular.
 #[tauri::command]
 pub async fn tmdb_discover_movies(page: u32, genre: Option<u32>) -> Result<Value, String> {
-    eprintln!("[tmdb] discover_movies  page={} genre={:?}", page, genre);
+    log::info!("[tmdb] discover_movies  page={} genre={:?}", page, genre);
     let key = api_key();
     let p = page.to_string();
     let req = if let Some(gid) = genre {
@@ -43,7 +43,10 @@ pub async fn tmdb_discover_movies(page: u32, genre: Option<u32>) -> Result<Value
     let res = req
         .await
         .map_err(|e| {
-            eprintln!("[tmdb] ERROR: {e}");
+            log::error!(
+                "[tmdb] ERROR: {}",
+                crate::logging::redact(&e.to_string(), &key)
+            );
             e.to_string()
         })?
         .json::<Value>()
@@ -54,7 +57,7 @@ pub async fn tmdb_discover_movies(page: u32, genre: Option<u32>) -> Result<Value
 
 #[tauri::command]
 pub async fn tmdb_genres_movies() -> Result<Value, String> {
-    eprintln!("[tmdb] genres_movies");
+    log::info!("[tmdb] genres_movies");
     let key = api_key();
     let res = http()
         .get(format!("{BASE}/genre/movie/list"))
@@ -70,7 +73,7 @@ pub async fn tmdb_genres_movies() -> Result<Value, String> {
 
 #[tauri::command]
 pub async fn tmdb_search_movies(query: &str, page: u32) -> Result<Value, String> {
-    eprintln!("[tmdb] search_movies  query={:?} page={}", query, page);
+    log::info!("[tmdb] search_movies  query={:?} page={}", query, page);
     let key = api_key();
     let p = page.to_string();
     let res = http()
@@ -93,7 +96,7 @@ pub async fn tmdb_search_movies(query: &str, page: u32) -> Result<Value, String>
 
 #[tauri::command]
 pub async fn tmdb_movie_details(id: u32) -> Result<Value, String> {
-    eprintln!("[tmdb] movie_details  id={}", id);
+    log::info!("[tmdb] movie_details  id={}", id);
     let key = api_key();
     let res = http()
         .get(format!("{BASE}/movie/{id}"))
@@ -114,7 +117,7 @@ pub async fn tmdb_movie_details(id: u32) -> Result<Value, String> {
 // ── TV SERIES ──────────────────────────────────────────────
 #[tauri::command]
 pub async fn tmdb_discover_tv(page: u32, genre: Option<u32>) -> Result<Value, String> {
-    eprintln!("[tmdb] discover_tv  page={} genre={:?}", page, genre);
+    log::info!("[tmdb] discover_tv  page={} genre={:?}", page, genre);
     let key = api_key();
     let p = page.to_string();
     let req = if let Some(gid) = genre {
@@ -151,7 +154,7 @@ pub async fn tmdb_discover_tv(page: u32, genre: Option<u32>) -> Result<Value, St
 
 #[tauri::command]
 pub async fn tmdb_genres_tv() -> Result<Value, String> {
-    eprintln!("[tmdb] genres_tv");
+    log::info!("[tmdb] genres_tv");
     let key = api_key();
     let res = http()
         .get(format!("{BASE}/genre/tv/list"))
@@ -167,7 +170,7 @@ pub async fn tmdb_genres_tv() -> Result<Value, String> {
 
 #[tauri::command]
 pub async fn tmdb_search_tv(query: &str, page: u32) -> Result<Value, String> {
-    eprintln!("[tmdb] search_tv  query={:?} page={}", query, page);
+    log::info!("[tmdb] search_tv  query={:?} page={}", query, page);
     let key = api_key();
     let p = page.to_string();
     let res = http()
@@ -190,7 +193,7 @@ pub async fn tmdb_search_tv(query: &str, page: u32) -> Result<Value, String> {
 
 #[tauri::command]
 pub async fn tmdb_tv_details(id: u32) -> Result<Value, String> {
-    eprintln!("[tmdb] tv_details  id={}", id);
+    log::info!("[tmdb] tv_details  id={}", id);
     let key = api_key();
     let res = http()
         .get(format!("{BASE}/tv/{id}"))
