@@ -1,4 +1,7 @@
-# TauriFlix
+# tauri-app
+
+> Working/placeholder name until the base is stable — locked before the
+> first public release (see `GOALS.md` in the vault, §13 scope decisions).
 
 A cross-platform media tracker built with **Tauri 2**, **SvelteKit**, and **Rust**.
 
