@@ -1,26 +1,43 @@
-// Forwards the webview's console.* into tauri-plugin-log, so frontend logs
-// land in the same terminal / log file / logcat as the Rust side.
+// Bridges the webview console and tauri-plugin-log in both directions, so
+// every log line is visible in the terminal / log file / logcat AND in the
+// devtools console:
 //
-// The reverse direction (Rust logs -> devtools console) is handled by the
-// plugin's Webview target in dev builds, so attachConsole() is deliberately
-// not used here: combining both would echo every line back and forth.
-import { debug, error, info, trace, warn } from "@tauri-apps/plugin-log";
+//   frontend console.*  → plugin → terminal, log file, logcat
+//   Rust log::*         → plugin Webview target (dev builds) → devtools console
+//
+// Echo safety: Rust's Webview target only emits Rust records (lib.rs filters
+// out `webview` records), and incoming Rust lines are printed with the
+// ORIGINAL console methods, so they are never forwarded back to the plugin.
+import { attachLogger, debug, error, info, LogLevel, warn } from "@tauri-apps/plugin-log";
 
 type Level = "log" | "debug" | "info" | "warn" | "error";
+type ConsoleFn = (...args: unknown[]) => void;
 
+const LEVELS: Level[] = ["log", "debug", "info", "warn", "error"];
+
+// console.log is everyday debugging output: send it at debug, not trace, so
+// it passes the dev-build default level instead of being filtered out.
 const SINKS: Record<Level, (message: string) => Promise<void>> = {
-  log: trace,
+  log: debug,
   debug,
   info,
   warn,
   error,
 };
 
-function format(args: unknown[]): string {
+const LEVEL_TO_CONSOLE: Record<LogLevel, Level> = {
+  [LogLevel.Trace]: "debug",
+  [LogLevel.Debug]: "debug",
+  [LogLevel.Info]: "info",
+  [LogLevel.Warn]: "warn",
+  [LogLevel.Error]: "error",
+};
+
+export function format(args: unknown[]): string {
   return args
     .map((a) => {
       if (typeof a === "string") return a;
-      if (a instanceof Error) return `${a.name}: ${a.message}`;
+      if (a instanceof Error) return a.stack ?? `${a.name}: ${a.message}`;
       try {
         return JSON.stringify(a);
       } catch {
@@ -36,16 +53,17 @@ function inTauri(): boolean {
 
 /**
  * Patches console.{log,debug,info,warn,error} to also write through the log
- * plugin. The original method is still called, so devtools output is
- * unchanged. No-op outside Tauri (plain browser, Playwright, SSR).
- * Returns a function that restores the original methods.
+ * plugin, and prints Rust log records into the devtools console (tagged
+ * `[rust]`). The original console method is still called, so devtools output
+ * for frontend logs is unchanged. No-op outside Tauri (plain browser,
+ * Playwright, SSR). Returns a function that undoes both.
  */
 export function forwardConsole(): () => void {
   if (!inTauri()) return () => {};
 
-  const originals = {} as Record<Level, (...args: unknown[]) => void>;
-  for (const level of Object.keys(SINKS) as Level[]) {
-    const original = console[level];
+  const originals = {} as Record<Level, ConsoleFn>;
+  for (const level of LEVELS) {
+    const original = console[level] as ConsoleFn;
     originals[level] = original;
     console[level] = (...args: unknown[]) => {
       original.apply(console, args);
@@ -55,8 +73,22 @@ export function forwardConsole(): () => void {
     };
   }
 
+  let stopListening: (() => void) | undefined;
+  let stopped = false;
+  attachLogger(({ level, message }) => {
+    const target = LEVEL_TO_CONSOLE[level] ?? "info";
+    originals[target].call(console, `[rust] ${message}`);
+  })
+    .then((unlisten) => {
+      if (stopped) unlisten();
+      else stopListening = unlisten;
+    })
+    .catch(() => {});
+
   return () => {
-    for (const level of Object.keys(originals) as Level[]) {
+    stopped = true;
+    stopListening?.();
+    for (const level of LEVELS) {
       console[level] = originals[level];
     }
   };

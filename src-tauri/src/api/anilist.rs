@@ -1,4 +1,4 @@
-use super::http::{client as http, request_error};
+use super::http::{client as http, fetch_json};
 use serde_json::{json, Value};
 
 const ENDPOINT: &str = "https://graphql.anilist.co";
@@ -74,18 +74,13 @@ fn check_graphql(v: &Value) -> Result<(), String> {
     Ok(())
 }
 
-async fn graphql(query: &str, variables: Value) -> Result<Value, String> {
+async fn graphql(op: &str, query: &str, variables: Value) -> Result<Value, String> {
     let body = json!({ "query": query, "variables": variables });
-    let res = http()
+    let req = http()
         .post(ENDPOINT)
         .header("Accept", "application/json")
-        .json(&body)
-        .send()
-        .await
-        .map_err(|e| request_error("anilist", e))?
-        .json::<Value>()
-        .await
-        .map_err(|e| request_error("anilist", e))?;
+        .json(&body);
+    let res = fetch_json("anilist", op, req).await?;
     check_graphql(&res)?;
     Ok(res)
 }
@@ -149,7 +144,8 @@ async fn run_list(
         vars["genre"] = json!(g);
     }
 
-    graphql(&list_query(media_type), vars).await
+    let op = if has_query { "search" } else { "discover" };
+    graphql(op, &list_query(media_type), vars).await
 }
 
 // ── ANIME ─────────────────────────────────────────────────
@@ -159,7 +155,7 @@ pub async fn anilist_search_anime(
     page: u32,
     genre: Option<String>,
 ) -> Result<Value, String> {
-    log::info!(
+    log::debug!(
         "[anilist] search_anime  query={:?} page={} genre={:?}",
         query,
         page,
@@ -170,8 +166,8 @@ pub async fn anilist_search_anime(
 
 #[tauri::command]
 pub async fn anilist_anime_details(id: u32) -> Result<Value, String> {
-    log::info!("[anilist] anime_details  id={}", id);
-    let res = graphql(&detail_query(), json!({ "id": id })).await?;
+    log::debug!("[anilist] anime_details  id={}", id);
+    let res = graphql("details", &detail_query(), json!({ "id": id })).await?;
     res.get("data")
         .and_then(|d| d.get("Media"))
         .cloned()
@@ -185,7 +181,7 @@ pub async fn anilist_search_manga(
     page: u32,
     genre: Option<String>,
 ) -> Result<Value, String> {
-    log::info!(
+    log::debug!(
         "[anilist] search_manga  query={:?} page={} genre={:?}",
         query,
         page,
@@ -196,8 +192,8 @@ pub async fn anilist_search_manga(
 
 #[tauri::command]
 pub async fn anilist_manga_details(id: u32) -> Result<Value, String> {
-    log::info!("[anilist] manga_details  id={}", id);
-    let res = graphql(&detail_query(), json!({ "id": id })).await?;
+    log::debug!("[anilist] manga_details  id={}", id);
+    let res = graphql("details", &detail_query(), json!({ "id": id })).await?;
     res.get("data")
         .and_then(|d| d.get("Media"))
         .cloned()
@@ -208,8 +204,8 @@ pub async fn anilist_manga_details(id: u32) -> Result<Value, String> {
 // AniList exposes a single `GenreCollection` shared by anime and manga.
 #[tauri::command]
 pub async fn anilist_genres() -> Result<Value, String> {
-    log::info!("[anilist] genres");
-    let res = graphql("query { GenreCollection }", json!({})).await?;
+    log::debug!("[anilist] genres");
+    let res = graphql("genres", "query { GenreCollection }", json!({})).await?;
     Ok(res
         .get("data")
         .and_then(|d| d.get("GenreCollection"))

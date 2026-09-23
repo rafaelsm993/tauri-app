@@ -1,4 +1,4 @@
-use super::http::{client as http, request_error};
+use super::http::{client as http, fetch_json};
 use serde_json::{json, Value};
 
 const BASE: &str = "https://api.rawg.io/api";
@@ -21,7 +21,7 @@ fn total_pages(total: u32, page: u32) -> u32 {
 // Default ordering is "popularity desc". Page size 20 to match other providers.
 #[tauri::command]
 pub async fn rawg_discover(page: u32, genre: Option<String>) -> Result<Value, String> {
-    log::info!("[rawg] discover  page={} genre={:?}", page, genre);
+    log::debug!("[rawg] discover  page={} genre={:?}", page, genre);
     let key = api_key();
     let p = page.to_string();
     let page_size = PAGE_SIZE.to_string();
@@ -34,15 +34,12 @@ pub async fn rawg_discover(page: u32, genre: Option<String>) -> Result<Value, St
     if let Some(ref g) = genre {
         params.push(("genres", g.as_str()));
     }
-    let res = http()
-        .get(format!("{BASE}/games"))
-        .query(&params)
-        .send()
-        .await
-        .map_err(|e| request_error("rawg", e))?
-        .json::<Value>()
-        .await
-        .map_err(|e| request_error("rawg", e))?;
+    let res = fetch_json(
+        "rawg",
+        "discover",
+        http().get(format!("{BASE}/games")).query(&params),
+    )
+    .await?;
 
     let total = res.get("count").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
     let results = res.get("results").cloned().unwrap_or(Value::Array(vec![]));
@@ -58,7 +55,7 @@ pub async fn rawg_discover(page: u32, genre: Option<String>) -> Result<Value, St
 // ── SEARCH ─────────────────────────────────────────────────
 #[tauri::command]
 pub async fn rawg_search(query: &str, page: u32, genre: Option<String>) -> Result<Value, String> {
-    log::info!(
+    log::debug!(
         "[rawg] search  query={:?} page={} genre={:?}",
         query,
         page,
@@ -77,15 +74,12 @@ pub async fn rawg_search(query: &str, page: u32, genre: Option<String>) -> Resul
     if let Some(ref g) = genre {
         params.push(("genres", g.as_str()));
     }
-    let res = http()
-        .get(format!("{BASE}/games"))
-        .query(&params)
-        .send()
-        .await
-        .map_err(|e| request_error("rawg", e))?
-        .json::<Value>()
-        .await
-        .map_err(|e| request_error("rawg", e))?;
+    let res = fetch_json(
+        "rawg",
+        "search",
+        http().get(format!("{BASE}/games")).query(&params),
+    )
+    .await?;
 
     let total = res.get("count").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
     let results = res.get("results").cloned().unwrap_or(Value::Array(vec![]));
@@ -101,17 +95,16 @@ pub async fn rawg_search(query: &str, page: u32, genre: Option<String>) -> Resul
 // ── GENRES ─────────────────────────────────────────────────
 #[tauri::command]
 pub async fn rawg_genres() -> Result<Value, String> {
-    log::info!("[rawg] genres");
+    log::debug!("[rawg] genres");
     let key = api_key();
-    let res = http()
-        .get(format!("{BASE}/genres"))
-        .query(&[("key", key.as_str()), ("page_size", "40")])
-        .send()
-        .await
-        .map_err(|e| request_error("rawg", e))?
-        .json::<Value>()
-        .await
-        .map_err(|e| request_error("rawg", e))?;
+    let res = fetch_json(
+        "rawg",
+        "genres",
+        http()
+            .get(format!("{BASE}/genres"))
+            .query(&[("key", key.as_str()), ("page_size", "40")]),
+    )
+    .await?;
     Ok(res)
 }
 
@@ -121,40 +114,33 @@ pub async fn rawg_genres() -> Result<Value, String> {
 // and merge the screenshots into the detail payload.
 #[tauri::command]
 pub async fn rawg_details(id: u32) -> Result<Value, String> {
-    log::info!("[rawg] details  id={}", id);
+    log::debug!("[rawg] details  id={}", id);
     let key = api_key();
     let client = http();
 
-    let detail_fut = client
+    let detail_req = client
         .get(format!("{BASE}/games/{id}"))
-        .query(&[("key", key.as_str())])
-        .send();
-    let shots_fut = client
+        .query(&[("key", key.as_str())]);
+    let shots_req = client
         .get(format!("{BASE}/games/{id}/screenshots"))
-        .query(&[("key", key.as_str())])
-        .send();
+        .query(&[("key", key.as_str())]);
 
-    let (detail_res, shots_res) = tokio::join!(detail_fut, shots_fut);
-
-    let mut detail = detail_res
-        .map_err(|e| request_error("rawg", e))?
-        .json::<Value>()
-        .await
-        .map_err(|e| request_error("rawg", e))?;
+    let (detail_res, shots_res) = tokio::join!(
+        fetch_json("rawg", "details", detail_req),
+        fetch_json("rawg", "screenshots", shots_req)
+    );
+    let mut detail = detail_res?;
 
     if let Some(msg) = detail.get("detail").and_then(|v| v.as_str()) {
         return Err(msg.to_string());
     }
 
-    if let Ok(shots) = shots_res {
-        if let Ok(shots_json) = shots.json::<Value>().await {
-            if let Some(arr) = shots_json.get("results").cloned() {
-                detail["screenshots"] = arr;
-            }
-        }
+    // Screenshots are optional: a failure is already logged by fetch_json.
+    if let Some(arr) = shots_res.ok().and_then(|s| s.get("results").cloned()) {
+        detail["screenshots"] = arr;
     }
 
-    log::info!("[rawg] details → name={:?}", detail.get("name"));
+    log::debug!("[rawg] details → name={:?}", detail.get("name"));
     Ok(detail)
 }
 

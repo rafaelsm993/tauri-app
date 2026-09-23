@@ -3,7 +3,7 @@ pub mod logging;
 
 #[cfg(debug_assertions)]
 use tauri::Manager;
-use tauri_plugin_log::{Target, TargetKind};
+use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 
 /// Dev builds only: `TAURI_APP_DEVTOOLS=1 npm run tauri dev` opens the Web Inspector on start.
 /// Opt-in because a docked inspector costs viewport and CPU on every run; right-click →
@@ -14,7 +14,8 @@ fn devtools_requested(value: Option<&str>) -> bool {
 }
 
 /// Log targets: terminal (and logcat on Android) plus a rotating file in the
-/// platform app-log dir. Dev builds also mirror into the devtools console.
+/// platform app-log dir. Dev builds also mirror Rust records into the devtools
+/// console (frontend records are filtered out there, or they would echo).
 fn log_targets() -> Vec<Target> {
     #[allow(unused_mut)]
     let mut targets = vec![
@@ -22,21 +23,33 @@ fn log_targets() -> Vec<Target> {
         Target::new(TargetKind::LogDir { file_name: None }),
     ];
     #[cfg(debug_assertions)]
-    targets.push(Target::new(TargetKind::Webview));
+    targets.push(Target::new(TargetKind::Webview).filter(|m| logging::is_rust_record(m.target())));
     targets
+}
+
+fn log_plugin<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
+    let level = logging::level_from_env(
+        std::env::var("TAURI_APP_LOG").ok().as_deref(),
+        logging::default_level(cfg!(debug_assertions)),
+    );
+    let mut builder = tauri_plugin_log::Builder::new()
+        .level(level)
+        .targets(log_targets())
+        // Default is 40 KB and delete-on-rotate: a normal session would wipe
+        // the file within minutes, and on Android it is the only durable log.
+        .max_file_size(5_000_000)
+        .rotation_strategy(RotationStrategy::KeepSome(3))
+        .timezone_strategy(TimezoneStrategy::UseLocal);
+    for krate in logging::NOISY_CRATES {
+        builder = builder.level_for(*krate, logging::noisy_crate_level(level));
+    }
+    builder.build()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(
-            tauri_plugin_log::Builder::new()
-                .level(logging::level_from_env(
-                    std::env::var("TAURI_APP_LOG").ok().as_deref(),
-                ))
-                .targets(log_targets())
-                .build(),
-        )
+        .plugin(log_plugin())
         .plugin(tauri_plugin_opener::init())
         .setup(|_app| {
             #[cfg(debug_assertions)]

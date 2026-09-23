@@ -1,4 +1,4 @@
-use super::http::{client as http, request_error};
+use super::http::{client as http, fetch_json};
 use serde_json::Value;
 
 const BASE: &str = "https://itunes.apple.com";
@@ -14,7 +14,7 @@ const PAGE_SIZE: u32 = 20;
 // the `genre` argument (e.g. "romance", "fantasia", "mistério").
 #[tauri::command]
 pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Result<Value, String> {
-    log::info!(
+    log::debug!(
         "[itunes] search  query={:?} page={} genre={:?}",
         query,
         page,
@@ -34,22 +34,19 @@ pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Res
     let offset = ((page.saturating_sub(1)) * PAGE_SIZE).to_string();
     let limit = PAGE_SIZE.to_string();
 
-    let res = http()
-        .get(format!("{BASE}/search"))
-        .query(&[
+    let res = fetch_json(
+        "itunes",
+        "search",
+        http().get(format!("{BASE}/search")).query(&[
             ("media", "ebook"),
             ("term", term.as_str()),
             ("limit", limit.as_str()),
             ("offset", offset.as_str()),
-        ])
-        .send()
-        .await
-        .map_err(|e| request_error("itunes", e))?
-        .json::<Value>()
-        .await
-        .map_err(|e| request_error("itunes", e))?;
+        ]),
+    )
+    .await?;
 
-    log::info!(
+    log::debug!(
         "[itunes] search → {} results (term={:?})",
         res["resultCount"].as_u64().unwrap_or(0),
         term
@@ -62,16 +59,13 @@ pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Res
 // /lookup is brittle when combined with media=ebook.
 #[tauri::command]
 pub async fn itunes_details(id: &str) -> Result<Value, String> {
-    log::info!("[itunes] details  id={}", id);
-    let res = http()
-        .get(format!("{BASE}/lookup"))
-        .query(&[("id", id)])
-        .send()
-        .await
-        .map_err(|e| request_error("itunes", e))?
-        .json::<Value>()
-        .await
-        .map_err(|e| request_error("itunes", e))?;
+    log::debug!("[itunes] details  id={}", id);
+    let res = fetch_json(
+        "itunes",
+        "details",
+        http().get(format!("{BASE}/lookup")).query(&[("id", id)]),
+    )
+    .await?;
 
     let first = res
         .get("results")
@@ -80,6 +74,6 @@ pub async fn itunes_details(id: &str) -> Result<Value, String> {
         .cloned()
         .ok_or_else(|| "Livro não encontrado.".to_string())?;
 
-    log::info!("[itunes] details → name={:?}", first.get("trackName"));
+    log::debug!("[itunes] details → name={:?}", first.get("trackName"));
     Ok(first)
 }
