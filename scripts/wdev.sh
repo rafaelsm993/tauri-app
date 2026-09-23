@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# scripts/wdev.sh
+# Launches the Windows-native dev build from a WSL shell.
+# The app process, Vite, and cargo all run on Windows; WSL only issues the command.
+# Usage:  WSL$ ./scripts/wdev.sh          (dev)
+#         WSL$ ./scripts/wdev.sh build    (release bundles)
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+case "$repo_root" in
+  /mnt/[a-z]/*) ;;
+  *) echo "error: repo must live on a Windows drive (/mnt/<drive>/...), got: $repo_root" >&2; exit 1 ;;
+esac
+
+win_root="$(wslpath -w "$repo_root")"
+script="dev.ps1"
+[ "${1:-dev}" = "build" ] && script="build.ps1"
+
+exec powershell.exe -NoProfile -ExecutionPolicy Bypass \
+  -Command "cd '$win_root'; .\\scripts\\$script"

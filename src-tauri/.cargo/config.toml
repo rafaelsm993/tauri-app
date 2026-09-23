@@ -1,0 +1,16 @@
+# src-tauri/.cargo/config.toml
+# Build settings shared by both machines (see docs/BUILD_AND_RUN.md).
+# The MSVC-only flags below are target-scoped and ignored by the Linux build.
+
+[build]
+# Keep the (large) incremental artefacts on the same NTFS volume as the source.
+# Do NOT relocate this to a WSL ext4 path: cargo.exe would then write across the
+# 9p bridge and every rebuild would slow down instead of speeding up.
+target-dir = "target"
+
+[target.x86_64-pc-windows-msvc]
+# /INCREMENTAL speeds up relinking of the 20 MB debug binary.
+rustflags = ["-C", "link-arg=/INCREMENTAL"]
+
+[net]
+git-fetch-with-cli = true

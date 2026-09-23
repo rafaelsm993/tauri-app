@@ -1,0 +1,50 @@
+# ── Dependencies ──────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# ── Build outputs ─────────────────────────────────────────
+build/
+.svelte-kit/
+dist/
+/package
+
+# ── Tauri ─────────────────────────────────────────────────
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# ── Env & secrets ─────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+
+# ── IDE ───────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.iml
+# ── Local SQLite databases (no longer used by the app) ────
+*.db
+
+# ── Playwright ────────────────────────────────────────────
+test-results/
+playwright-report/
+
+# Product strategy docs — moved to the private Obsidian vault repo
+# (obisidian-journal/Programming/Tauri App/). Never commit these here:
+# this repo is public.
+docs/GOALS.md
+docs/GOALS-QA.md
+docs/sprints/
+
+# Local tool artifact, not part of the project
+.allai/
+
+# Planning history — kept locally, hidden from the public repo
+.hermes/plans/
