@@ -8,11 +8,15 @@
   import CategoryTabs from "$lib/components/ui/CategoryTabs.svelte";
   import GenreCarousel from "$lib/components/ui/GenreCarousel.svelte";
   import BackToTop from "$lib/components/ui/BackToTop.svelte";
-  import BrowseSidebar from "$lib/components/browse/BrowseSidebar.svelte";
+  import MultiSelect from "$lib/components/ui/MultiSelect.svelte";
   import BrowseContext from "$lib/components/browse/BrowseContext.svelte";
   import ResultsGrid from "$lib/components/browse/ResultsGrid.svelte";
+  import { whenVisible } from "$lib/attachments/whenVisible";
 
   const browse = new BrowseStore();
+
+  // Carousels start loading about one screen before they scroll into view.
+  const PRELOAD_MARGIN = "100% 0px";
 
   const genreName = $derived(
     browse.activeGenre === null
@@ -41,18 +45,21 @@
       placeholder="Buscar filmes, séries, anime, mangá, livros…"
     />
 
-    <CategoryTabs active={browse.activeCategory} onchange={(c) => browse.switchCategory(c)} />
+    <CategoryTabs active={browse.activeCategory} onchange={(c) => browse.switchCategory(c)}>
+      {#snippet trailing()}
+        {#if browse.carouselMode && browse.genres.length > 0}
+          <MultiSelect
+            label="Gêneros"
+            options={browse.genreOptions}
+            selected={browse.selectedGenres}
+            onchange={(ids) => browse.setSelectedGenres(ids)}
+          />
+        {/if}
+      {/snippet}
+    </CategoryTabs>
   </header>
 
   <div class="page-body">
-    <BrowseSidebar
-      visible={!browse.isSearch}
-      genres={browse.genres}
-      active={browse.activeGenre}
-      loading={browse.genresLoading}
-      onchange={(id) => browse.switchGenre(id)}
-    />
-
     <main class="main-col">
       <BrowseContext
         isSearch={browse.isSearch}
@@ -73,15 +80,23 @@
         {#if browse.sections.length === 0 && !browse.genresLoading}
           <p class="page-empty">Nenhum gênero disponível.</p>
         {:else}
-          {#each browse.sections as section (section.genre.id)}
-            <GenreCarousel
-              title={section.genre.name}
-              items={section.items}
-              loading={section.loading}
-              error={section.error}
-              onCardClick={openDetail}
-              onSeeMore={() => browse.switchGenre(section.genre.id)}
-            />
+          {#each browse.visibleSections as section (section.genre.id)}
+            <div
+              class="carousel-slot"
+              {@attach whenVisible(() => browse.loadSection(section.genre.id), {
+                rootMargin: PRELOAD_MARGIN,
+              })}
+            >
+              <GenreCarousel
+                title={section.genre.name}
+                items={section.items}
+                loading={section.loading}
+                error={section.error}
+                onCardClick={openDetail}
+                onSeeMore={() => browse.switchGenre(section.genre.id)}
+                onRetry={() => browse.retrySection(section.genre.id)}
+              />
+            </div>
           {/each}
         {/if}
       {:else}
@@ -118,30 +133,25 @@
     padding-bottom: $spacing-lg;
   }
 
-  // ── Two-column body: sidebar list + main column ────────
+  // ── Body: single column ─────────────────────────────────
   .page-body {
     display: flex;
-    align-items: flex-start;
-    gap: $spacing-xl;
-
-    @include respond-to(lg) {
-      flex-direction: column;
-    }
+    min-width: 0;
   }
 
   .main-col {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     min-width: 0; // critical: lets carousel rails overflow:auto kick in
     overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: $spacing-md;
+  }
 
-    // Stacked layout: a 0 basis on the column axis collapses to 0 px under overflow: hidden.
-    @include respond-to(lg) {
-      flex: 0 0 auto;
-      width: 100%;
-    }
+  // Wrapper that carries the lazy-load observer. Loading carousels render
+  // full-height skeletons, so only the first few slots start near the viewport.
+  .carousel-slot {
+    min-width: 0;
   }
 
   // ── States ──────────────────────────────────────────────

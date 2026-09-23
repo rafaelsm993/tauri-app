@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import type { MediaType } from "$lib/types/media";
 
   type Category = { key: MediaType; label: string };
@@ -12,35 +13,61 @@
     { key: "game", label: "Jogos" },
   ];
 
-  let { active, onchange } = $props<{
+  let { active, onchange, trailing } = $props<{
     active: MediaType;
     onchange: (category: MediaType) => void;
+    // Optional control after the tabs (e.g. a filter). Lives outside the scrolling
+    // nav so its popups are never clipped and it isn't announced as a category.
+    trailing?: Snippet;
   }>();
 </script>
 
-<nav class="category-tabs" aria-label="Categorias">
-  {#each CATEGORIES as cat (cat.key)}
-    <button
-      type="button"
-      class="category-tab"
-      class:active={active === cat.key}
-      aria-pressed={active === cat.key}
-      onclick={() => onchange(cat.key)}
-    >
-      {cat.label}
-    </button>
-  {/each}
-</nav>
+<div class="category-bar">
+  <nav class="category-tabs" aria-label="Categorias">
+    {#each CATEGORIES as cat (cat.key)}
+      <button
+        type="button"
+        class="category-tab"
+        class:active={active === cat.key}
+        aria-pressed={active === cat.key}
+        onclick={() => onchange(cat.key)}
+      >
+        {cat.label}
+      </button>
+    {/each}
+  </nav>
+  {#if trailing}
+    <span class="category-bar__divider" aria-hidden="true"></span>
+    {@render trailing()}
+  {/if}
+</div>
 
 <style lang="scss">
-  .category-tabs {
+  // The pill lives on the bar; only the tab list scrolls inside it.
+  .category-bar {
     display: flex;
+    align-items: center;
     gap: $spacing-xs;
     padding: 3px;
     background: $color-bg-secondary;
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: $radius-full;
     max-width: 100%;
+    min-width: 0;
+  }
+
+  .category-bar__divider {
+    flex: 0 0 auto;
+    width: 1px;
+    height: 1.1em;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .category-tabs {
+    display: flex;
+    gap: $spacing-xs;
+    min-width: 0;
+    border-radius: $radius-full;
     overflow-x: auto;
     scrollbar-width: none;
     &::-webkit-scrollbar {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Catalog } from "$lib/api/catalog";
 import type { GenreId, GenreOption, MediaItem, MediaType } from "$lib/types/media";
-import { BrowseStore, MAX_CAROUSELS } from "./browse.svelte";
+import { BrowseStore } from "./browse.svelte";
 
 const item = (id: number): MediaItem => ({
   id,
@@ -32,16 +32,44 @@ function fakeCatalog(over: Partial<Catalog> = {}): Catalog {
 }
 
 describe("BrowseStore", () => {
-  it("refreshView: loads genres once, then one carousel per top genre (capped)", async () => {
+  it("refreshView: one idle section per genre, no page fetched until a section asks", async () => {
     const cat = fakeCatalog();
     const s = new BrowseStore(cat);
     await s.refreshView();
     expect(s.carouselMode).toBe(true);
-    expect(s.sections).toHaveLength(MAX_CAROUSELS);
-    expect(s.sections.every((x) => !x.loading && x.items.length === 2)).toBe(true);
-    expect(cat.fetchPage).toHaveBeenCalledTimes(MAX_CAROUSELS);
+    expect(s.sections.map((x) => x.genre.id)).toEqual(genres(10).map((g) => g.id)); // uncapped
+    expect(s.sections.every((x) => x.loading && x.items.length === 0)).toBe(true);
+    expect(cat.fetchPage).not.toHaveBeenCalled();
     await s.refreshView();
     expect(cat.fetchGenres).toHaveBeenCalledTimes(1); // cached per category
+  });
+
+  it("loadSection: fetches that genre once, however often it is asked", async () => {
+    const cat = fakeCatalog();
+    const s = new BrowseStore(cat);
+    await s.refreshView();
+    await Promise.all([s.loadSection(7), s.loadSection(7)]);
+    await s.loadSection(7);
+    expect(cat.fetchPage).toHaveBeenCalledTimes(1);
+    expect(cat.fetchPage).toHaveBeenCalledWith("movie", "", 1, 7);
+    const sec = s.sections.find((x) => x.genre.id === 7)!;
+    expect(sec.loading).toBe(false);
+    expect(sec.items).toHaveLength(2);
+    expect(s.sections.filter((x) => !x.loading)).toHaveLength(1);
+  });
+
+  it("genre selection filters the rendered sections and resets on category switch", async () => {
+    const s = new BrowseStore(fakeCatalog());
+    await s.refreshView();
+    expect(s.genreOptions).toEqual(genres(10).map((g) => ({ value: g.id, label: g.name })));
+    expect(s.visibleSections).toHaveLength(10); // nothing selected = everything
+
+    s.setSelectedGenres([3, 1]);
+    expect(s.visibleSections.map((x) => x.genre.id)).toEqual([1, 3]); // provider order kept
+
+    await s.switchCategory("tv");
+    expect(s.selectedGenres).toEqual([]);
+    expect(s.visibleSections).toHaveLength(10);
   });
 
   it("a failing carousel shows its own error; the others still load", async () => {
@@ -53,8 +81,28 @@ describe("BrowseStore", () => {
     });
     const s = new BrowseStore(cat);
     await s.refreshView();
+    await Promise.all([s.loadSection(1), s.loadSection(2)]);
     expect(s.sections[0].error).toBe("HTTP 429");
     expect(s.sections[1].items).toHaveLength(1);
+  });
+
+  it("retrySection: refetches a failed carousel", async () => {
+    let fail = true;
+    const cat = fakeCatalog({
+      fetchPage: vi.fn(async () => {
+        if (fail) throw "HTTP 429";
+        return page([9]);
+      }),
+    });
+    const s = new BrowseStore(cat);
+    await s.refreshView();
+    await s.loadSection(1);
+    expect(s.sections[0].error).toBe("HTTP 429");
+    fail = false;
+    await s.retrySection(1);
+    expect(s.sections[0]).toMatchObject({ error: "", loading: false });
+    expect(s.sections[0].items.map((i) => i.id)).toEqual([9]);
+    expect(cat.fetchPage).toHaveBeenCalledTimes(2);
   });
 
   it("falls back to a flat grid when a category has no genres", async () => {
@@ -116,17 +164,18 @@ describe("BrowseStore", () => {
       }),
     });
     const s = new BrowseStore(cat);
-    const first = s.refreshView(); // movie carousels start, then block
+    await s.refreshView();
+    const late = s.loadSection(1); // movie carousel starts, then blocks
     await vi.waitFor(() => expect(cat.fetchPage).toHaveBeenCalledWith("movie", "", 1, 1));
     s.activeGenre = 5;
-    await s.switchCategory("anime"); // anime carousels fully load
-    release(); // late movie results arrive now and must be dropped
-    await first;
+    await s.switchCategory("anime");
+    await s.loadSection(1); // anime carousel with the same genre id loads
+    release(); // late movie result arrives now and must be dropped
+    await late;
     expect(s.activeCategory).toBe("anime");
     expect(s.activeGenre).toBeNull();
     const ids = s.sections.flatMap((x) => x.items.map((i) => i.id));
-    expect(ids.length).toBeGreaterThan(0);
-    expect(ids.every((id) => id === 2)).toBe(true);
+    expect(ids).toEqual([2]);
   });
 
   it("switchGenre to the same id is a no-op", async () => {

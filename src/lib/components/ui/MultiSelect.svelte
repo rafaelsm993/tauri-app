@@ -1,0 +1,283 @@
+<script lang="ts">
+  // ============================================================
+  // MultiSelect — generic "pick any number of options" control.
+  // A trigger button opens a popover panel of native checkboxes.
+  // Popover gives top-layer rendering (never clipped by a scrolling
+  // parent), light-dismiss and Esc for free; the panel is placed
+  // under the trigger and clamped to the viewport.
+  // ============================================================
+  type Value = string | number;
+  type Option = { value: Value; label: string };
+
+  let {
+    label,
+    options = [],
+    selected = [],
+    onchange,
+    disabled = false,
+  } = $props<{
+    label: string;
+    options: Option[];
+    selected: Value[];
+    onchange: (next: Value[]) => void;
+    disabled?: boolean;
+  }>();
+
+  const id = $props.id();
+  const panelId = `${id}-panel`;
+
+  let trigger = $state<HTMLButtonElement>();
+  let panel = $state<HTMLDivElement>();
+  let open = $state(false);
+
+  const count = $derived(selected.length);
+
+  function toggleValue(value: Value, checked: boolean) {
+    // Rebuild from `options` so the result keeps option order and original types.
+    const isOn = (v: Value) => (v === value ? checked : selected.includes(v));
+    onchange(options.map((o: Option) => o.value).filter(isOn));
+  }
+
+  const GAP = 6; // px between trigger and panel
+  const EDGE = 8; // px kept clear of the viewport edge
+
+  function place() {
+    if (!trigger || !panel) return;
+    const t = trigger.getBoundingClientRect();
+    const w = panel.offsetWidth;
+    const left = Math.min(Math.max(EDGE, t.right - w), window.innerWidth - w - EDGE);
+    panel.style.left = `${Math.max(EDGE, left)}px`;
+    panel.style.top = `${t.bottom + GAP}px`;
+    panel.style.maxHeight = `${Math.max(160, window.innerHeight - t.bottom - GAP - EDGE)}px`;
+  }
+
+  function onToggle(e: ToggleEvent) {
+    open = e.newState === "open";
+    if (open) place();
+  }
+
+  // Keep the panel attached to the trigger while open (scroll / resize).
+  $effect(() => {
+    if (!open) return;
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, { capture: true });
+    };
+  });
+</script>
+
+<button
+  bind:this={trigger}
+  type="button"
+  class="ms-trigger"
+  class:has-value={count > 0}
+  popovertarget={panelId}
+  aria-expanded={open}
+  {disabled}
+>
+  <span class="ms-trigger__label">{count > 0 ? `${label} · ${count}` : label}</span>
+  <svg class="ms-trigger__chevron" class:open viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+</button>
+
+<div bind:this={panel} id={panelId} class="ms-panel" popover="auto" ontoggle={onToggle}>
+  <fieldset class="ms-group">
+    <legend class="ms-legend">{label}</legend>
+    {#each options as o (o.value)}
+      <label class="ms-option">
+        <input
+          type="checkbox"
+          checked={selected.includes(o.value)}
+          onchange={(e) => toggleValue(o.value, e.currentTarget.checked)}
+        />
+        <span>{o.label}</span>
+      </label>
+    {/each}
+  </fieldset>
+  {#if count > 0}
+    <button type="button" class="ms-clear" onclick={() => onchange([])}>Limpar</button>
+  {/if}
+</div>
+
+<style lang="scss">
+  // Trigger matches a CategoryTabs tab so it reads as part of the bar.
+  .ms-trigger {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-xs;
+    padding: $spacing-xs $spacing-md;
+    border: none;
+    border-radius: $radius-full;
+    background: transparent;
+    color: $color-text-faint;
+    font-size: 0.76rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color $dur-fast ease,
+      background $dur-fast ease;
+
+    @include hover-capable {
+      &:hover:not(:disabled) {
+        color: $color-text-main;
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    &.has-value {
+      color: $color-text-main;
+      font-weight: 700;
+    }
+
+    @include touch {
+      min-height: $touch-target;
+    }
+  }
+
+  .ms-trigger__chevron {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform $dur-fast ease;
+
+    &.open {
+      transform: rotate(180deg);
+    }
+  }
+
+  // Top-layer panel; left/top/max-height are set from the trigger on open.
+  .ms-panel {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    box-sizing: border-box;
+    width: min(260px, calc(100vw - #{$spacing-md}));
+    padding: $spacing-xs;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: $color-bg-secondary;
+    color: $color-text-main;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: $radius-md;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  .ms-group {
+    margin: 0;
+    padding: 0;
+    border: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ms-legend {
+    @include sr-only;
+  }
+
+  // The native checkbox stays (keyboard, screen readers, real click target) but is
+  // transparent and stretched over the row; a selected row gets a filled
+  // background, like an active category tab.
+  .ms-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: $spacing-sm $spacing-md;
+    border-radius: $radius-sm;
+    color: $color-text-muted;
+    font-size: 0.84rem;
+    cursor: pointer;
+    transition:
+      background $dur-fast ease,
+      color $dur-fast ease;
+
+    & + & {
+      margin-top: 2px;
+    }
+
+    input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    &:has(input:focus-visible) {
+      outline: 2px solid $color-primary;
+      outline-offset: -2px;
+    }
+
+    @include hover-capable {
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: $color-text-main;
+      }
+    }
+
+    // After :hover so a selected row keeps its fill under the pointer.
+    &:has(input:checked) {
+      background: $color-primary;
+      color: $color-text-main;
+      font-weight: 600;
+    }
+
+    &:has(input:checked:focus-visible) {
+      outline-color: $color-text-main;
+    }
+
+    @include touch {
+      min-height: $touch-target;
+    }
+  }
+
+  .ms-clear {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    margin-top: $spacing-xs;
+    padding: $spacing-sm;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: $color-bg-secondary;
+    color: $color-text-muted;
+    font-size: 0.78rem;
+    cursor: pointer;
+
+    @include hover-capable {
+      &:hover {
+        color: $color-text-main;
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: -2px;
+    }
+
+    @include touch {
+      min-height: $touch-target;
+    }
+  }
+</style>

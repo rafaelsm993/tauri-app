@@ -55,6 +55,94 @@ test.describe("touch devices", () => {
     expect(height, "main column collapsed to 0 px and clips its content").toBeGreaterThan(0);
   });
 
+  test("genre filter sits at the end of the category bar and hides during search", async ({
+    page,
+    isMobile,
+  }) => {
+    const nav = page.getByRole("navigation", { name: "Categorias" });
+    const trigger = page.getByRole("button", { name: /^Gêneros/ });
+    await expect(trigger).toBeVisible();
+    // Same bar as the tabs, after them, but not one of the six categories.
+    expect(await nav.getByRole("button").count()).toBe(6);
+    const sameBar = await trigger.evaluate(
+      (t) => t.closest(".category-bar") !== null && !t.closest("nav"),
+    );
+    expect(sameBar, "trigger is not in the category bar").toBe(true);
+    if (isMobile) expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    const bar = (await trigger.evaluate(
+      (t) => t.closest(".category-bar")!.getBoundingClientRect().right,
+    ))!;
+    expect(bar, "category bar is wider than the viewport").toBeLessThanOrEqual(
+      page.viewportSize()!.width,
+    );
+
+    await page.getByRole("textbox").fill("teste");
+    await page.keyboard.press("Enter");
+    await expect(page.getByText("Resultados para", { exact: false })).toBeVisible();
+    await expect(trigger).toHaveCount(0);
+
+    await page.getByRole("button", { name: "← Descobrir" }).click();
+    await expect(page.getByRole("button", { name: /^Gêneros/ })).toBeVisible();
+  });
+
+  test("hovering the genre filter does not move it", async ({ page }) => {
+    const trigger = page.getByRole("button", { name: /^Gêneros/ });
+    await expect(trigger).toBeVisible();
+    const before = (await trigger.boundingBox())!;
+    await trigger.hover();
+    await page.waitForTimeout(400); // past any transition
+    const after = (await trigger.boundingBox())!;
+    expect(Math.round(after.x)).toBe(Math.round(before.x));
+    expect(Math.round(after.y)).toBe(Math.round(before.y));
+  });
+
+  test("picking genres shows only those carousels", async ({ page }) => {
+    const viewport = page.viewportSize()!;
+    const headings = page.getByRole("main").getByRole("heading", { level: 2 });
+    await expect(headings).toHaveCount(19); // one carousel per genre, uncapped
+
+    await page.getByRole("button", { name: /^Gêneros/ }).click();
+    const group = page.getByRole("group", { name: "Gêneros" });
+    await expect(group).toBeVisible();
+    const panel = (await group.evaluate((g) =>
+      g.closest("[popover]")!.getBoundingClientRect().toJSON(),
+    ))!;
+    expect(panel.left, "panel starts off-screen").toBeGreaterThanOrEqual(0);
+    expect(panel.right, "panel ends off-screen").toBeLessThanOrEqual(viewport.width);
+    expect(panel.bottom, "panel runs below the viewport").toBeLessThanOrEqual(viewport.height);
+
+    await group.getByRole("checkbox", { name: "Faroeste" }).check(); // the last genre
+    await group.getByRole("checkbox", { name: "Comédia" }).check();
+    await expect(page.getByRole("button", { name: "Gêneros · 2" })).toBeVisible();
+    await expect(headings).toHaveText(["Comédia", "Faroeste"]);
+
+    await page.keyboard.press("Escape");
+    await expect(group).toBeHidden();
+    await expect(headings).toHaveText(["Comédia", "Faroeste"]);
+    // The picked, previously off-screen carousel loads on its own.
+    await expect(
+      page.getByRole("main").getByText("Filme de teste 1 ", { exact: false }).first(),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Gêneros · 2" }).click();
+    await page.getByRole("button", { name: "Limpar" }).click();
+    await expect(headings).toHaveCount(19);
+  });
+
+  test("carousels load lazily: first paint does not fetch every genre", async ({ page }) => {
+    const calls = () =>
+      page.evaluate(() => (window as unknown as { __ipcCalls: string[] }).__ipcCalls);
+    const discover = async () => (await calls()).filter((c) => c === "tmdb_discover_movies").length;
+    const first = await discover();
+    expect(first, "no carousel loaded").toBeGreaterThan(0);
+    expect(first, "every carousel was fetched up front").toBeLessThan(19);
+
+    await page.evaluate(() =>
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }),
+    );
+    await expect.poll(discover).toBeGreaterThan(first);
+  });
+
   test("back-to-top button appears after scrolling and is touch-sized", async ({
     page,
     isMobile,

@@ -16,6 +16,7 @@
     error = "",
     onCardClick,
     onSeeMore,
+    onRetry,
   } = $props<{
     title: string;
     items: MediaItem[];
@@ -23,6 +24,7 @@
     error?: string;
     onCardClick: (item: MediaItem) => void;
     onSeeMore?: () => void;
+    onRetry?: () => void;
   }>();
 
   let railEl = $state<HTMLDivElement | undefined>(undefined);
@@ -78,7 +80,12 @@
           </div>
         {/each}
       {:else if error}
-        <p class="rail-error">⚠ {error}</p>
+        <p class="rail-error">
+          ⚠ {error}
+          {#if onRetry}
+            <button type="button" class="retry-btn" onclick={onRetry}>Tentar novamente</button>
+          {/if}
+        </p>
       {:else if items.length === 0}
         <p class="rail-empty">Nenhum item disponível.</p>
       {:else}
@@ -187,6 +194,33 @@
     padding: $spacing-xl 0;
     text-align: center;
     width: 100%;
+  }
+
+  .retry-btn {
+    margin-left: $spacing-sm;
+    padding: $spacing-xs $spacing-sm;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: $radius-sm;
+    background: none;
+    color: $color-text-muted;
+    font-size: 0.76rem;
+    cursor: pointer;
+
+    @include hover-capable {
+      &:hover {
+        color: $color-text-main;
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
+    }
+
+    @include touch {
+      min-height: $touch-target;
+    }
   }
 
   // ── Skeletons ───────────────────────────────────────────

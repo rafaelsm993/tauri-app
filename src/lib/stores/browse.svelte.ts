@@ -7,10 +7,6 @@ import { errorMessage } from "$lib/utils/errors";
 import { GENRE_SUPPORTED } from "$lib/types/media";
 import type { GenreId, GenreOption, MediaItem, MediaType } from "$lib/types/media";
 
-// Max genre carousels on the home view at once. Capped to keep API volume
-// in check (AniList: 90 req/min, iTunes: ~20 req/min).
-export const MAX_CAROUSELS = 8;
-
 export type GenreSection = {
   genre: GenreOption;
   items: MediaItem[];
@@ -38,14 +34,26 @@ export class BrowseStore {
   genres = $state<GenreOption[]>([]);
   activeGenre = $state<GenreId | null>(null);
   genresLoading = $state(false);
+  // Carousels the user picked in the genre multi-select; empty = show all.
+  selectedGenres = $state<GenreId[]>([]);
 
   carouselMode = $derived(!this.isSearch && this.activeGenre === null);
+  genreOptions = $derived(this.genres.map((g) => ({ value: g.id, label: g.name })));
+  visibleSections = $derived(
+    this.selectedGenres.length === 0
+      ? this.sections
+      : this.sections.filter((s) => this.selectedGenres.includes(s.genre.id)),
+  );
   hasMore = $derived(this.page < this.totalPages && !this.error);
 
   #catalog: Catalog;
   // Per-category cache so switching tabs back and forth is instant.
   // Not reactive on purpose: only `genres` is rendered.
   #genreCache: Partial<Record<MediaType, GenreOption[]>> = {};
+  // Genre ids whose carousel page was already requested for the current sections.
+  // Bookkeeping only, never rendered, so deliberately not reactive.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- not UI state
+  #requested = new Set<GenreId>();
 
   constructor(catalog: Catalog = defaultCatalog) {
     this.#catalog = catalog;
@@ -75,29 +83,48 @@ export class BrowseStore {
     }
   }
 
-  // Requests run in parallel so one 429 doesn't block the rest. Writes from
-  // a stale category (user switched tabs while waiting) are dropped.
-  async loadCarousels(cat: MediaType, list: GenreOption[]) {
-    const top = list.slice(0, MAX_CAROUSELS);
-    this.sections = top.map((genre) => ({ genre, items: [], loading: true, error: "" }));
-    if (top.length === 0) return;
+  // One idle section per genre (uncapped). Nothing is fetched here: each
+  // carousel calls loadSection() when it scrolls near the viewport, so first
+  // paint costs a handful of requests instead of one per genre (AniList
+  // 90 req/min, iTunes ~20 req/min). Cache/back-off: S2·B6.
+  loadCarousels(list: GenreOption[]) {
+    this.#requested.clear();
+    this.sections = list.map((genre) => ({ genre, items: [], loading: true, error: "" }));
+  }
 
-    await Promise.allSettled(
-      top.map(async (g, idx) => {
-        try {
-          const res = await this.#catalog.fetchPage(cat, "", 1, g.id);
-          if (this.activeCategory !== cat) return;
-          this.sections[idx] = { ...this.sections[idx], items: res.results, loading: false };
-        } catch (e) {
-          if (this.activeCategory !== cat) return;
-          this.sections[idx] = {
-            ...this.sections[idx],
-            loading: false,
-            error: errorMessage(e, "Erro."),
-          };
-        }
-      }),
-    );
+  // Idempotent per section per carousel load. Writes from a stale category
+  // (user switched tabs while waiting) are dropped.
+  async loadSection(id: GenreId) {
+    if (this.#requested.has(id)) return;
+    const cat = this.activeCategory;
+    const idx = this.sections.findIndex((s) => s.genre.id === id);
+    if (idx === -1) return;
+    this.#requested.add(id);
+    const sections = this.sections;
+    try {
+      const res = await this.#catalog.fetchPage(cat, "", 1, id);
+      if (this.activeCategory !== cat || this.sections !== sections) return;
+      this.sections[idx] = { ...this.sections[idx], items: res.results, loading: false };
+    } catch (e) {
+      if (this.activeCategory !== cat || this.sections !== sections) return;
+      this.sections[idx] = {
+        ...this.sections[idx],
+        loading: false,
+        error: errorMessage(e, "Erro."),
+      };
+    }
+  }
+
+  retrySection(id: GenreId) {
+    const idx = this.sections.findIndex((s) => s.genre.id === id);
+    if (idx === -1) return;
+    this.#requested.delete(id);
+    this.sections[idx] = { ...this.sections[idx], loading: true, error: "" };
+    return this.loadSection(id);
+  }
+
+  setSelectedGenres(ids: GenreId[]) {
+    this.selectedGenres = ids;
   }
 
   async loadGrid(newQuery = this.query) {
@@ -149,10 +176,9 @@ export class BrowseStore {
         await this.loadGrid("");
         return;
       }
-      this.sections = [];
       this.items = [];
       this.loading = false;
-      await this.loadCarousels(this.activeCategory, list);
+      this.loadCarousels(list);
     } else {
       this.sections = [];
       await this.loadGrid(this.query);
@@ -179,6 +205,7 @@ export class BrowseStore {
     if (cat === this.activeCategory && !this.loading) return;
     this.activeCategory = cat;
     this.activeGenre = null; // genre ids are not portable across providers
+    this.selectedGenres = [];
     await this.refreshGenres(cat);
     await this.refreshView();
   }

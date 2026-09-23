@@ -16,18 +16,29 @@ const MOVIE = (id: number) => ({
 });
 
 const FIXTURES: Record<string, unknown> = {
+  // Real TMDB count (19): the home page renders one lazy carousel per genre.
   tmdb_genres_movies: {
     genres: [
-      { id: 28, name: "Ação" },
-      { id: 35, name: "Comédia" },
-      { id: 18, name: "Drama" },
-      // Real TMDB returns ~19 genres, so the home page renders MAX_CAROUSELS (8) rails.
-      { id: 27, name: "Terror" },
-      { id: 878, name: "Ficção científica" },
-      { id: 16, name: "Animação" },
-      { id: 53, name: "Thriller" },
-      { id: 10749, name: "Romance" },
-    ],
+      [28, "Ação"],
+      [12, "Aventura"],
+      [16, "Animação"],
+      [35, "Comédia"],
+      [80, "Crime"],
+      [99, "Documentário"],
+      [18, "Drama"],
+      [10751, "Família"],
+      [14, "Fantasia"],
+      [36, "História"],
+      [27, "Terror"],
+      [10402, "Música"],
+      [9648, "Mistério"],
+      [10749, "Romance"],
+      [878, "Ficção científica"],
+      [10770, "Cinema TV"],
+      [53, "Thriller"],
+      [10752, "Guerra"],
+      [37, "Faroeste"],
+    ].map(([id, name]) => ({ id, name })),
   },
   tmdb_discover_movies: {
     page: 1,
@@ -51,8 +62,14 @@ export const test = base.extend({
     await page.addInitScript((fixtures) => {
       const empty = { page: 1, total_pages: 1, total_results: 0, results: [], genres: [] };
       // Shape consumed by @tauri-apps/api/core `invoke()`.
+      // Every command name, in call order: lets tests assert request volume.
+      const calls: string[] = [];
+      Object.assign(window, { __ipcCalls: calls });
       (window as any).__TAURI_INTERNALS__ = {
-        invoke: async (cmd: string) => structuredClone(fixtures[cmd] ?? empty),
+        invoke: async (cmd: string) => {
+          calls.push(cmd);
+          return structuredClone(fixtures[cmd] ?? empty);
+        },
         transformCallback: () => 0,
         metadata: { currentWindow: { label: "main" }, currentWebview: { label: "main" } },
       };
