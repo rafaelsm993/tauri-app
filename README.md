@@ -47,13 +47,16 @@ Conventions, TDD loop and the quality gate live in [AGENTS.md](AGENTS.md). Befor
 
 ## Branch Model
 
-| Branch        | Purpose                              |
-| ------------- | ------------------------------------ |
-| `main`        | Stable releases only (tagged)        |
-| `release/x.y` | Release candidate — fixes only       |
-| `dev`         | Integration — all features land here |
-| `feat/*`      | Feature branches (from dev)          |
-| `fix/*`       | Bug fix branches (from dev)          |
+| Branch        | Purpose                                    |
+| ------------- | ------------------------------------------- |
+| `main`        | Protected — all work branches from here     |
+| `release/x.y` | Release candidate — fixes only              |
+| `feat/*`      | Feature branches (from main)                |
+| `fix/*`       | Bug fix branches (from main)                |
+| `chore/*`     | Tooling, deps, dependency bumps             |
+| `docs/*`      | Documentation-only changes                  |
+| `refactor/*`  | Internal restructuring, no behavior change  |
+| `test/*`      | Test-only changes                           |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full workflow.
 

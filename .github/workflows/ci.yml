@@ -1,11 +1,11 @@
-# Same gate as local `npm run verify`. Runs on pushes to dev and PRs to dev/main/release/*.
+# Same gate as local `npm run verify`. Runs on pushes to main and PRs into main/release/*.
 name: CI
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
   pull_request:
-    branches: [dev, main, "release/*"]
+    branches: [main, "release/*"]
 
 env:
   # env!() needs these at compile time; CI never calls the real APIs.
