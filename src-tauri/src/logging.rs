@@ -7,7 +7,6 @@
 //! it is logged or returned to the UI.
 
 use log::LevelFilter;
-use tauri_plugin_log::WEBVIEW_TARGET;
 
 /// Default level when `TAURI_APP_LOG` is unset: `Debug` in dev builds so
 /// request lines and `console.debug` show up, `Info` in release builds.
@@ -45,14 +44,6 @@ pub fn noisy_crate_level(level: LevelFilter) -> LevelFilter {
     } else {
         level.min(LevelFilter::Info)
     }
-}
-
-/// True for records that originate in Rust, false for records the frontend
-/// sent through the plugin (`target` = `webview` or `webview::<location>`).
-/// The Webview target uses this so frontend logs are not echoed back into the
-/// devtools console they came from.
-pub fn is_rust_record(target: &str) -> bool {
-    !target.starts_with(WEBVIEW_TARGET)
 }
 
 #[cfg(test)]
@@ -100,12 +91,5 @@ mod tests {
         assert_eq!(noisy_crate_level(LevelFilter::Info), LevelFilter::Info);
         assert_eq!(noisy_crate_level(LevelFilter::Warn), LevelFilter::Warn);
         assert_eq!(noisy_crate_level(LevelFilter::Trace), LevelFilter::Trace);
-    }
-
-    #[test]
-    fn is_rust_record_excludes_frontend_records() {
-        assert!(is_rust_record("tauri_app_lib::api::http"));
-        assert!(!is_rust_record("webview"));
-        assert!(!is_rust_record("webview::src/lib/logging/console.ts:40"));
     }
 }

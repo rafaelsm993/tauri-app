@@ -1,27 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-type Record_ = { level: number; message: string };
-
-const plugin = vi.hoisted(() => {
-  const state: { listener?: (r: { level: number; message: string }) => void } = {};
-  return {
-    state,
-    unlisten: vi.fn(),
-    trace: vi.fn(() => Promise.resolve()),
-    debug: vi.fn(() => Promise.resolve()),
-    info: vi.fn(() => Promise.resolve()),
-    warn: vi.fn(() => Promise.resolve()),
-    error: vi.fn(() => Promise.resolve()),
-    LogLevel: { Trace: 1, Debug: 2, Info: 3, Warn: 4, Error: 5 },
-  };
-});
-vi.mock("@tauri-apps/plugin-log", () => ({
-  ...plugin,
-  attachLogger: vi.fn((fn: (r: Record_) => void) => {
-    plugin.state.listener = fn;
-    return Promise.resolve(plugin.unlisten);
-  }),
+const plugin = vi.hoisted(() => ({
+  trace: vi.fn(() => Promise.resolve()),
+  debug: vi.fn(() => Promise.resolve()),
+  info: vi.fn(() => Promise.resolve()),
+  warn: vi.fn(() => Promise.resolve()),
+  error: vi.fn(() => Promise.resolve()),
+  attachLogger: vi.fn(() => Promise.resolve(() => {})),
+  attachConsole: vi.fn(() => Promise.resolve(() => {})),
 }));
+vi.mock("@tauri-apps/plugin-log", () => plugin);
 
 import { format, forwardConsole } from "./console";
 
@@ -33,12 +21,9 @@ function setTauri(on: boolean) {
   else delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
 }
 
-const flush = () => new Promise((r) => setTimeout(r, 0));
-
 describe("forwardConsole", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    plugin.state.listener = undefined;
     for (const l of LEVELS) console[l] = vi.fn();
   });
 
@@ -54,7 +39,6 @@ describe("forwardConsole", () => {
     console.info("x");
     expect(console.info).toBe(original);
     expect(plugin.info).not.toHaveBeenCalled();
-    expect(plugin.state.listener).toBeUndefined();
     restore();
   });
 
@@ -84,45 +68,21 @@ describe("forwardConsole", () => {
     restore();
   });
 
-  it("prints Rust records in devtools, tagged, at the matching level", async () => {
+  it("does not mirror Rust logs into devtools (terminal/log file only)", () => {
     setTauri(true);
-    const originalInfo = console.info;
-    const originalWarn = console.warn;
     const restore = forwardConsole();
-    await flush();
-    plugin.state.listener!({ level: plugin.LogLevel.Info, message: "[tmdb] search → 200" });
-    plugin.state.listener!({ level: plugin.LogLevel.Warn, message: "[rawg] HTTP 401" });
-    expect(originalInfo).toHaveBeenCalledWith("[rust] [tmdb] search → 200");
-    expect(originalWarn).toHaveBeenCalledWith("[rust] [rawg] HTTP 401");
+    expect(plugin.attachLogger).not.toHaveBeenCalled();
+    expect(plugin.attachConsole).not.toHaveBeenCalled();
     restore();
   });
 
-  it("never echoes Rust records back to the plugin", async () => {
-    setTauri(true);
-    const restore = forwardConsole();
-    await flush();
-    plugin.state.listener!({ level: plugin.LogLevel.Info, message: "from rust" });
-    expect(plugin.info).not.toHaveBeenCalled();
-    restore();
-  });
-
-  it("restore() puts the console back and stops listening", async () => {
+  it("restore() puts the original console methods back", () => {
     setTauri(true);
     const originals = LEVELS.map((l) => console[l]);
     const restore = forwardConsole();
-    await flush();
     expect(console.info).not.toBe(originals[2]);
     restore();
     LEVELS.forEach((l, i) => expect(console[l]).toBe(originals[i]));
-    expect(plugin.unlisten).toHaveBeenCalledOnce();
-  });
-
-  it("restore() before the listener is ready still unlistens", async () => {
-    setTauri(true);
-    const restore = forwardConsole();
-    restore();
-    await flush();
-    expect(plugin.unlisten).toHaveBeenCalledOnce();
   });
 });
 
@@ -133,7 +93,6 @@ describe("format", () => {
 
   it("keeps the stack trace of errors", () => {
     const e = new Error("boom");
-    expect(format([e])).toContain("boom");
     expect(format([e])).toBe(e.stack);
   });
 

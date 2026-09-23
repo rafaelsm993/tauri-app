@@ -66,9 +66,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full workflow.
 | -------------- | -------- | ---------------------------- |
 | `TMDB_API_KEY` | Yes      | Must be defined at Rust compile time; valid key needed for movies/TV |
 | `RAWG_API_KEY` | Yes      | Must be defined at Rust compile time; valid key needed for games |
-| `TAURI_APP_LOG` | No      | Log level: `trace`, `debug`, `info` (default), `warn`, `error`, `off` |
+| `TAURI_APP_LOG` | No      | Log level: `trace`, `debug`, `info`, `warn`, `error`, `off`. Default: `debug` in dev builds, `info` in release |
 
-Logs go to the terminal, to `<app-log-dir>/tauri-app.log` (Linux: `~/.local/share/com.user.tauri-app/logs/`), to logcat on Android, and in dev builds to the devtools console. Frontend `console.*` calls are forwarded to the same log. Provider errors never include request URLs, so API keys are never logged or shown in the UI.
+Logs go to the terminal, to `<app-log-dir>/tauri-app.log` (Linux: `~/.local/share/com.user.tauri-app/logs/`), and to logcat on Android. Frontend `console.*` calls show in the devtools console and are also forwarded to the terminal and log file; Rust logs are not mirrored into devtools. Provider errors never include request URLs, so API keys are never logged or shown in the UI.
 
 Copy `.env.example` to `.env` at the project root and fill these in before starting development or building. Rust keys are embedded at compile time and can be overridden by runtime environment variables. AniList and iTunes require no API key.
 

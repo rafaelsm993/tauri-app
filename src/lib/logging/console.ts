@@ -1,14 +1,9 @@
-// Bridges the webview console and tauri-plugin-log in both directions, so
-// every log line is visible in the terminal / log file / logcat AND in the
-// devtools console:
+// Forwards the webview's console.* into tauri-plugin-log, so frontend logs
+// also land in the terminal / log file / logcat next to the Rust logs.
 //
-//   frontend console.*  → plugin → terminal, log file, logcat
-//   Rust log::*         → plugin Webview target (dev builds) → devtools console
-//
-// Echo safety: Rust's Webview target only emits Rust records (lib.rs filters
-// out `webview` records), and incoming Rust lines are printed with the
-// ORIGINAL console methods, so they are never forwarded back to the plugin.
-import { attachLogger, debug, error, info, LogLevel, warn } from "@tauri-apps/plugin-log";
+// One direction only, on purpose: the devtools console shows frontend output,
+// and Rust logs stay in the terminal and log file (no mirroring into devtools).
+import { debug, error, info, warn } from "@tauri-apps/plugin-log";
 
 type Level = "log" | "debug" | "info" | "warn" | "error";
 type ConsoleFn = (...args: unknown[]) => void;
@@ -23,14 +18,6 @@ const SINKS: Record<Level, (message: string) => Promise<void>> = {
   info,
   warn,
   error,
-};
-
-const LEVEL_TO_CONSOLE: Record<LogLevel, Level> = {
-  [LogLevel.Trace]: "debug",
-  [LogLevel.Debug]: "debug",
-  [LogLevel.Info]: "info",
-  [LogLevel.Warn]: "warn",
-  [LogLevel.Error]: "error",
 };
 
 export function format(args: unknown[]): string {
@@ -53,10 +40,9 @@ function inTauri(): boolean {
 
 /**
  * Patches console.{log,debug,info,warn,error} to also write through the log
- * plugin, and prints Rust log records into the devtools console (tagged
- * `[rust]`). The original console method is still called, so devtools output
- * for frontend logs is unchanged. No-op outside Tauri (plain browser,
- * Playwright, SSR). Returns a function that undoes both.
+ * plugin. The original method is still called, so devtools output is
+ * unchanged. No-op outside Tauri (plain browser, Playwright, SSR).
+ * Returns a function that restores the original methods.
  */
 export function forwardConsole(): () => void {
   if (!inTauri()) return () => {};
@@ -73,21 +59,7 @@ export function forwardConsole(): () => void {
     };
   }
 
-  let stopListening: (() => void) | undefined;
-  let stopped = false;
-  attachLogger(({ level, message }) => {
-    const target = LEVEL_TO_CONSOLE[level] ?? "info";
-    originals[target].call(console, `[rust] ${message}`);
-  })
-    .then((unlisten) => {
-      if (stopped) unlisten();
-      else stopListening = unlisten;
-    })
-    .catch(() => {});
-
   return () => {
-    stopped = true;
-    stopListening?.();
     for (const level of LEVELS) {
       console[level] = originals[level];
     }

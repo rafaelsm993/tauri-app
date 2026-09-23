@@ -14,17 +14,13 @@ fn devtools_requested(value: Option<&str>) -> bool {
 }
 
 /// Log targets: terminal (and logcat on Android) plus a rotating file in the
-/// platform app-log dir. Dev builds also mirror Rust records into the devtools
-/// console (frontend records are filtered out there, or they would echo).
+/// platform app-log dir. Rust logs are deliberately NOT mirrored into the
+/// devtools console: that stays frontend-only (see src/lib/logging/console.ts).
 fn log_targets() -> Vec<Target> {
-    #[allow(unused_mut)]
-    let mut targets = vec![
+    vec![
         Target::new(TargetKind::Stdout),
         Target::new(TargetKind::LogDir { file_name: None }),
-    ];
-    #[cfg(debug_assertions)]
-    targets.push(Target::new(TargetKind::Webview).filter(|m| logging::is_rust_record(m.target())));
-    targets
+    ]
 }
 
 fn log_plugin<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
