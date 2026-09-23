@@ -5,25 +5,24 @@
   type Category = { key: MediaType; label: string };
 
   const CATEGORIES: Category[] = [
-    { key: "movie", label: "Filmes" },
-    { key: "tv", label: "Séries" },
+    { key: "movie", label: "Movies" },
+    { key: "tv", label: "TV Shows" },
     { key: "anime", label: "Anime" },
-    { key: "manga", label: "Mangá" },
-    { key: "book", label: "Livros" },
-    { key: "game", label: "Jogos" },
+    { key: "manga", label: "Manga" },
+    { key: "book", label: "Books" },
+    { key: "game", label: "Games" },
   ];
 
   let { active, onchange, trailing } = $props<{
     active: MediaType;
     onchange: (category: MediaType) => void;
-    // Optional control after the tabs (e.g. a filter). Lives outside the scrolling
-    // nav so its popups are never clipped and it isn't announced as a category.
+    // Optional control after the tabs; outside the scrolling nav so its popups aren't clipped.
     trailing?: Snippet;
   }>();
 </script>
 
 <div class="category-bar">
-  <nav class="category-tabs" aria-label="Categorias">
+  <nav class="category-tabs" aria-label="Categories">
     {#each CATEGORIES as cat (cat.key)}
       <button
         type="button"

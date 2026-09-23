@@ -53,6 +53,7 @@ Never edit `src-tauri/gen/` by hand.
 - New commands: prefer a typed `Serialize` struct over `serde_json::Value` when the frontend shape is fixed.
 - Least privilege: a new plugin/command gets only the permissions it needs in `capabilities/`.
 - Secrets: `TMDB_API_KEY`/`RAWG_API_KEY` come from `.env` via `build.rs`; never hardcode.
+- Comments: English, one short line above a fn/type/const, only when the name doesn't say it. No banners, blocks, inline or in-body comments.
 
 ## Frontend conventions
 - Svelte 5 only: `$props`, `$state`, `$derived`, `$effect`; `onclick` not `on:click`; no `writable()`.
@@ -64,6 +65,8 @@ Never edit `src-tauri/gen/` by hand.
 - Test UI with `@testing-library/svelte` by role/name; mock IPC with `@tauri-apps/api/mocks` (`mockIPC`, `clearMocks`).
 - Design tokens only (`$color-*`, `$spacing-*`, `$radius-*`); no new colors.
 - Formatting: Prettier owns it — double quotes in `.ts` **and** `.svelte`, 100 cols, trailing commas. Never hand-format; run `npm run format`.
+- Comments: English, one short line above a function/const/prop, only when the name doesn't say it; no banners, blocks, inline or `<!-- -->` labels. CSS comments are exempt.
+- English only (UI, fixtures, provider params). `npm run lint:en` enforces it; opt out per line with `// english-only: allow`.
 
 ## Responsive — every component, every time
 Supported range: **360 px phone → 1920 px+ desktop**, mouse **and** touch. The desktop window's minimum is 360×560 (`tauri.conf.json`), so small layouts are reachable on desktop too.

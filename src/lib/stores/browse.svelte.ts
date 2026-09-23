@@ -1,7 +1,3 @@
-// State and actions for the home (discovery) screen. Moved out of
-// src/routes/+page.svelte so it can be unit tested with a fake Catalog.
-// One instance per page mount: leaving the page and coming back starts
-// fresh, exactly as before.
 import { catalog as defaultCatalog, type Catalog } from "$lib/api/catalog";
 import { errorMessage } from "$lib/utils/errors";
 import { GENRE_SUPPORTED } from "$lib/types/media";
@@ -14,27 +10,25 @@ export type GenreSection = {
   error: string;
 };
 
+// Home screen state; one instance per page mount.
 export class BrowseStore {
   activeCategory = $state<MediaType>("movie");
   query = $state("");
   isSearch = $state(false);
   error = $state("");
 
-  // Flat-grid mode (search or a specific genre)
   items = $state<MediaItem[]>([]);
   page = $state(1);
   totalPages = $state(1);
   loading = $state(false);
   appending = $state(false);
 
-  // Carousel mode (default landing view): one section per top-N genre
   sections = $state<GenreSection[]>([]);
 
-  // Genre filter
   genres = $state<GenreOption[]>([]);
   activeGenre = $state<GenreId | null>(null);
   genresLoading = $state(false);
-  // Carousels the user picked in the genre multi-select; empty = show all.
+  // Empty means show all carousels.
   selectedGenres = $state<GenreId[]>([]);
 
   carouselMode = $derived(!this.isSearch && this.activeGenre === null);
@@ -47,11 +41,8 @@ export class BrowseStore {
   hasMore = $derived(this.page < this.totalPages && !this.error);
 
   #catalog: Catalog;
-  // Per-category cache so switching tabs back and forth is instant.
-  // Not reactive on purpose: only `genres` is rendered.
+  // Per-category cache, deliberately not reactive.
   #genreCache: Partial<Record<MediaType, GenreOption[]>> = {};
-  // Genre ids whose carousel page was already requested for the current sections.
-  // Bookkeeping only, never rendered, so deliberately not reactive.
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- not UI state
   #requested = new Set<GenreId>();
 
@@ -83,17 +74,13 @@ export class BrowseStore {
     }
   }
 
-  // One idle section per genre (uncapped). Nothing is fetched here: each
-  // carousel calls loadSection() when it scrolls near the viewport, so first
-  // paint costs a handful of requests instead of one per genre (AniList
-  // 90 req/min, iTunes ~20 req/min). Cache/back-off: S2·B6.
+  // Sections load lazily on scroll to respect rate limits (AniList 90/min, iTunes ~20/min).
   loadCarousels(list: GenreOption[]) {
     this.#requested.clear();
     this.sections = list.map((genre) => ({ genre, items: [], loading: true, error: "" }));
   }
 
-  // Idempotent per section per carousel load. Writes from a stale category
-  // (user switched tabs while waiting) are dropped.
+  // Idempotent per carousel load; results from a stale category are dropped.
   async loadSection(id: GenreId) {
     if (this.#requested.has(id)) return;
     const cat = this.activeCategory;
@@ -110,7 +97,7 @@ export class BrowseStore {
       this.sections[idx] = {
         ...this.sections[idx],
         loading: false,
-        error: errorMessage(e, "Erro."),
+        error: errorMessage(e, "Error."),
       };
     }
   }
@@ -140,7 +127,7 @@ export class BrowseStore {
       this.items = res.results;
       this.totalPages = res.total_pages ?? 1;
     } catch (e) {
-      this.error = errorMessage(e, "Erro ao buscar dados.");
+      this.error = errorMessage(e, "Failed to fetch data.");
     } finally {
       this.loading = false;
     }
@@ -160,7 +147,7 @@ export class BrowseStore {
       this.items = [...this.items, ...res.results];
       this.page = next;
     } catch (e) {
-      this.error = errorMessage(e, "Erro ao carregar mais.");
+      this.error = errorMessage(e, "Failed to load more.");
     } finally {
       this.appending = false;
     }
@@ -169,8 +156,6 @@ export class BrowseStore {
   async refreshView() {
     this.error = "";
     if (this.carouselMode) {
-      // Carousels need the genre list first; categories without genres
-      // fall back to a single grid.
       const list = await this.refreshGenres(this.activeCategory);
       if (!GENRE_SUPPORTED.has(this.activeCategory) || list.length === 0) {
         await this.loadGrid("");
@@ -189,7 +174,7 @@ export class BrowseStore {
     this.query = q;
     this.isSearch = !!q.trim();
     if (this.isSearch) {
-      this.activeGenre = null; // search always renders as a flat grid
+      this.activeGenre = null;
       return this.loadGrid(q);
     }
     return this.refreshView();
@@ -204,7 +189,7 @@ export class BrowseStore {
   async switchCategory(cat: MediaType) {
     if (cat === this.activeCategory && !this.loading) return;
     this.activeCategory = cat;
-    this.activeGenre = null; // genre ids are not portable across providers
+    this.activeGenre = null;
     this.selectedGenres = [];
     await this.refreshGenres(cat);
     await this.refreshView();

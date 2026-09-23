@@ -7,7 +7,6 @@ fn api_key() -> String {
     std::env::var("RAWG_API_KEY").unwrap_or_else(|_| env!("RAWG_API_KEY").to_string())
 }
 
-/// RAWG page size used by every list request (matches the other providers).
 const PAGE_SIZE: u32 = 20;
 /// RAWG refuses deep paging; never advertise more than this.
 const MAX_PAGES: u32 = 500;
@@ -17,8 +16,6 @@ fn total_pages(total: u32, page: u32) -> u32 {
     total.div_ceil(PAGE_SIZE).min(MAX_PAGES).max(page)
 }
 
-// ── DISCOVER ───────────────────────────────────────────────
-// Default ordering is "popularity desc". Page size 20 to match other providers.
 #[tauri::command]
 pub async fn rawg_discover(page: u32, genre: Option<String>) -> Result<Value, String> {
     log::debug!("[rawg] discover  page={} genre={:?}", page, genre);
@@ -52,7 +49,6 @@ pub async fn rawg_discover(page: u32, genre: Option<String>) -> Result<Value, St
     }))
 }
 
-// ── SEARCH ─────────────────────────────────────────────────
 #[tauri::command]
 pub async fn rawg_search(query: &str, page: u32, genre: Option<String>) -> Result<Value, String> {
     log::debug!(
@@ -92,7 +88,6 @@ pub async fn rawg_search(query: &str, page: u32, genre: Option<String>) -> Resul
     }))
 }
 
-// ── GENRES ─────────────────────────────────────────────────
 #[tauri::command]
 pub async fn rawg_genres() -> Result<Value, String> {
     log::debug!("[rawg] genres");
@@ -108,10 +103,7 @@ pub async fn rawg_genres() -> Result<Value, String> {
     Ok(res)
 }
 
-// ── DETAILS ────────────────────────────────────────────────
-// RAWG splits the detail across two endpoints: `/games/{id}` for metadata
-// and `/games/{id}/screenshots` for the gallery. We fetch both in parallel
-// and merge the screenshots into the detail payload.
+// RAWG splits metadata and screenshots across two endpoints; fetch both in parallel and merge.
 #[tauri::command]
 pub async fn rawg_details(id: u32) -> Result<Value, String> {
     log::debug!("[rawg] details  id={}", id);
@@ -135,7 +127,6 @@ pub async fn rawg_details(id: u32) -> Result<Value, String> {
         return Err(msg.to_string());
     }
 
-    // Screenshots are optional: a failure is already logged by fetch_json.
     if let Some(arr) = shots_res.ok().and_then(|s| s.get("results").cloned()) {
         detail["screenshots"] = arr;
     }

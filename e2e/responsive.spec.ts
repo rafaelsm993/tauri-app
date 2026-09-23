@@ -34,7 +34,7 @@ test.describe("touch devices", () => {
   test("category tabs are at least 44px tall on coarse pointers", async ({ page, isMobile }) => {
     test.skip(!isMobile, "mouse viewports may use compact targets");
     const heights = await page
-      .getByRole("navigation", { name: "Categorias" })
+      .getByRole("navigation", { name: "Categories" })
       .getByRole("button")
       .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
     expect(heights.length).toBe(6);
@@ -42,7 +42,7 @@ test.describe("touch devices", () => {
   });
 
   test("every category tab is reachable (fits or scrolls horizontally)", async ({ page }) => {
-    const nav = page.getByRole("navigation", { name: "Categorias" });
+    const nav = page.getByRole("navigation", { name: "Categories" });
     const ok = await nav.evaluate((el) => {
       const s = getComputedStyle(el);
       return el.scrollWidth <= el.clientWidth || ["auto", "scroll"].includes(s.overflowX);
@@ -59,10 +59,9 @@ test.describe("touch devices", () => {
     page,
     isMobile,
   }) => {
-    const nav = page.getByRole("navigation", { name: "Categorias" });
-    const trigger = page.getByRole("button", { name: /^Gêneros/ });
+    const nav = page.getByRole("navigation", { name: "Categories" });
+    const trigger = page.getByRole("button", { name: /^Genres/ });
     await expect(trigger).toBeVisible();
-    // Same bar as the tabs, after them, but not one of the six categories.
     expect(await nav.getByRole("button").count()).toBe(6);
     const sameBar = await trigger.evaluate(
       (t) => t.closest(".category-bar") !== null && !t.closest("nav"),
@@ -78,19 +77,19 @@ test.describe("touch devices", () => {
 
     await page.getByRole("textbox").fill("teste");
     await page.keyboard.press("Enter");
-    await expect(page.getByText("Resultados para", { exact: false })).toBeVisible();
+    await expect(page.getByText("Results for", { exact: false })).toBeVisible();
     await expect(trigger).toHaveCount(0);
 
-    await page.getByRole("button", { name: "← Descobrir" }).click();
-    await expect(page.getByRole("button", { name: /^Gêneros/ })).toBeVisible();
+    await page.getByRole("button", { name: "← Discover" }).click();
+    await expect(page.getByRole("button", { name: /^Genres/ })).toBeVisible();
   });
 
   test("hovering the genre filter does not move it", async ({ page }) => {
-    const trigger = page.getByRole("button", { name: /^Gêneros/ });
+    const trigger = page.getByRole("button", { name: /^Genres/ });
     await expect(trigger).toBeVisible();
     const before = (await trigger.boundingBox())!;
     await trigger.hover();
-    await page.waitForTimeout(400); // past any transition
+    await page.waitForTimeout(400);
     const after = (await trigger.boundingBox())!;
     expect(Math.round(after.x)).toBe(Math.round(before.x));
     expect(Math.round(after.y)).toBe(Math.round(before.y));
@@ -99,10 +98,10 @@ test.describe("touch devices", () => {
   test("picking genres shows only those carousels", async ({ page }) => {
     const viewport = page.viewportSize()!;
     const headings = page.getByRole("main").getByRole("heading", { level: 2 });
-    await expect(headings).toHaveCount(19); // one carousel per genre, uncapped
+    await expect(headings).toHaveCount(19);
 
-    await page.getByRole("button", { name: /^Gêneros/ }).click();
-    const group = page.getByRole("group", { name: "Gêneros" });
+    await page.getByRole("button", { name: /^Genres/ }).click();
+    const group = page.getByRole("group", { name: "Genres" });
     await expect(group).toBeVisible();
     const panel = (await group.evaluate((g) =>
       g.closest("[popover]")!.getBoundingClientRect().toJSON(),
@@ -111,21 +110,20 @@ test.describe("touch devices", () => {
     expect(panel.right, "panel ends off-screen").toBeLessThanOrEqual(viewport.width);
     expect(panel.bottom, "panel runs below the viewport").toBeLessThanOrEqual(viewport.height);
 
-    await group.getByRole("checkbox", { name: "Faroeste" }).check(); // the last genre
-    await group.getByRole("checkbox", { name: "Comédia" }).check();
-    await expect(page.getByRole("button", { name: "Gêneros · 2" })).toBeVisible();
-    await expect(headings).toHaveText(["Comédia", "Faroeste"]);
+    await group.getByRole("checkbox", { name: "Western" }).check();
+    await group.getByRole("checkbox", { name: "Comedy" }).check();
+    await expect(page.getByRole("button", { name: "Genres · 2" })).toBeVisible();
+    await expect(headings).toHaveText(["Comedy", "Western"]);
 
     await page.keyboard.press("Escape");
     await expect(group).toBeHidden();
-    await expect(headings).toHaveText(["Comédia", "Faroeste"]);
-    // The picked, previously off-screen carousel loads on its own.
+    await expect(headings).toHaveText(["Comedy", "Western"]);
     await expect(
-      page.getByRole("main").getByText("Filme de teste 1 ", { exact: false }).first(),
+      page.getByRole("main").getByText("Test movie 1 ", { exact: false }).first(),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Gêneros · 2" }).click();
-    await page.getByRole("button", { name: "Limpar" }).click();
+    await page.getByRole("button", { name: "Genres · 2" }).click();
+    await page.getByRole("button", { name: "Clear" }).click();
     await expect(headings).toHaveCount(19);
   });
 
@@ -147,7 +145,7 @@ test.describe("touch devices", () => {
     page,
     isMobile,
   }) => {
-    const button = page.getByRole("button", { name: "Voltar ao topo" });
+    const button = page.getByRole("button", { name: "Back to top" });
     await expect(button).toHaveCount(0);
 
     await page.evaluate(() =>
@@ -158,7 +156,6 @@ test.describe("touch devices", () => {
     const box = await button.boundingBox();
     const viewport = page.viewportSize()!;
     expect(box, "button has no layout box").not.toBeNull();
-    // Fully on screen (fixed bottom-right, not clipped off the edge).
     expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width);
     expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
     if (isMobile) {

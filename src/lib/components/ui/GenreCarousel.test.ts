@@ -7,19 +7,19 @@ describe("GenreCarousel", () => {
   it("offers a retry button when its row failed to load", async () => {
     const onRetry = vi.fn();
     render(GenreCarousel, {
-      title: "Ação",
+      title: "Action",
       items: [],
       error: "HTTP 429",
       onCardClick: () => {},
       onRetry,
     });
     expect(screen.getByText(/HTTP 429/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
   it("has no retry button without an error", () => {
-    render(GenreCarousel, { title: "Ação", items: [], onCardClick: () => {}, onRetry: () => {} });
-    expect(screen.queryByRole("button", { name: "Tentar novamente" })).toBeNull();
+    render(GenreCarousel, { title: "Action", items: [], onCardClick: () => {}, onRetry: () => {} });
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 });

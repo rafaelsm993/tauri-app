@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import BackToTop from "./BackToTop.svelte";
 
-const NAME = "Voltar ao topo";
+const NAME = "Back to top";
 
 function setViewport(height: number) {
   Object.defineProperty(window, "innerHeight", { value: height, configurable: true });
@@ -81,8 +81,6 @@ describe("BackToTop", () => {
     render(BackToTop);
     await scrollWindowTo(2000);
     await userEvent.click(screen.getByRole("button", { name: NAME }));
-    // "instant", not "auto": global.css sets `html { scroll-behavior: smooth }`,
-    // which "auto" would inherit.
     expect(scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 0, behavior: "instant" });
   });
 

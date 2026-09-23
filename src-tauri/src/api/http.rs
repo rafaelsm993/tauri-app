@@ -1,9 +1,4 @@
-//! One process-wide `reqwest::Client`, plus the shared request path every
-//! provider command uses (`fetch_json`) and its error mapper.
-//!
-//! `reqwest::Client` holds a connection pool and TLS session cache and is
-//! cheap to share (`Arc` inside). Building one per request, as the provider
-//! modules used to, throws both away on every call.
+//! Shared `reqwest::Client` (keeps the connection pool and TLS cache) and request path.
 use reqwest::{Client, RequestBuilder};
 use serde_json::Value;
 use std::sync::LazyLock;
@@ -16,30 +11,18 @@ static CLIENT: LazyLock<Client> = LazyLock::new(|| {
         .unwrap_or_else(|_| Client::new())
 });
 
-/// Shared HTTP client for every provider command.
 pub fn client() -> &'static Client {
     &CLIENT
 }
 
-/// Turns a `reqwest::Error` into the message returned to the UI, and logs it.
-///
-/// `reqwest::Error`'s `Display` appends `for url (...)`, and our request URLs
-/// carry API keys as query params (`api_key=` / `key=`). Stripping the URL at
-/// the source means the key can reach neither the log nor the UI, regardless
-/// of which provider or call site produced the error.
+/// Strips the URL from the error so API keys in query params never reach logs or the UI.
 pub fn request_error(provider: &str, e: reqwest::Error) -> String {
     let msg = e.without_url().to_string();
     log::error!("[{provider}] {msg}");
     msg
 }
 
-/// Sends `req`, checks the HTTP status, parses JSON, and logs one summary line:
-/// `[provider] op → 200 in 143ms, 20 results` (info) or
-/// `[provider] op → HTTP 401 in 88ms: Invalid API key` (warn).
-///
-/// Non-2xx responses (bad key, rate limit, not found) become `Err` with the
-/// provider's own message, so they are never passed to the UI as data. Only
-/// the summary is logged, never the body or the URL (which carries keys).
+/// Non-2xx becomes `Err` with the provider message; logs a summary only, never body or URL.
 pub async fn fetch_json(provider: &str, op: &str, req: RequestBuilder) -> Result<Value, String> {
     let started = Instant::now();
     let resp = req.send().await.map_err(|e| request_error(provider, e))?;
@@ -81,8 +64,7 @@ pub async fn fetch_json(provider: &str, op: &str, req: RequestBuilder) -> Result
     Ok(body)
 }
 
-/// Number of list items in a provider response, when it is a list.
-/// TMDB/RAWG/iTunes use `results`; AniList uses `data.Page.media`.
+/// TMDB/RAWG/iTunes list under `results`; AniList under `data.Page.media`.
 fn result_count(body: &Value) -> Option<usize> {
     body.get("results")
         .or_else(|| body.pointer("/data/Page/media"))
@@ -98,9 +80,7 @@ fn describe_count(count: Option<usize>) -> String {
     }
 }
 
-/// The provider's own error text from an error body, if it has one:
-/// TMDB `status_message`, RAWG `detail`/`error`, AniList `errors[].message`,
-/// iTunes `errorMessage`.
+/// Reads TMDB `status_message`, RAWG `detail`/`error`, AniList `errors[].message`, iTunes `errorMessage`.
 fn provider_error_message(body: &Value) -> Option<String> {
     let direct = ["status_message", "detail", "errorMessage", "error"]
         .iter()
@@ -127,8 +107,6 @@ mod tests {
 
     const SECRET: &str = "sup3r-s3cret-key";
 
-    // Port 1 on loopback refuses immediately: a real reqwest::Error whose
-    // Display includes the URL, with no network access needed.
     async fn failing_request() -> reqwest::Error {
         client()
             .get(format!("http://127.0.0.1:1/x?api_key={SECRET}"))
@@ -137,8 +115,7 @@ mod tests {
             .expect_err("port 1 must refuse the connection")
     }
 
-    /// One-shot local HTTP server returning `status_line` + `body`.
-    /// Returns a URL that carries a fake key, like the real providers.
+    /// One-shot local server; the returned URL carries a fake key like real providers.
     async fn serve_once(status_line: &'static str, body: &'static str) -> String {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
@@ -163,8 +140,6 @@ mod tests {
 
     #[tokio::test]
     async fn raw_reqwest_error_does_leak_the_key() {
-        // Guards the premise: if reqwest ever stops printing the URL, this
-        // fails and the helper below can be revisited.
         assert!(failing_request().await.to_string().contains(SECRET));
     }
 

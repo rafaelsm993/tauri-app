@@ -21,10 +21,10 @@
     <span class="meta-badge">{runtimeStr}</span>
   {/if}
   {#if detail.episodes}
-    <span class="meta-badge">{detail.episodes} episódios</span>
+    <span class="meta-badge">{detail.episodes} episodes</span>
   {/if}
   {#if detail.chapters}
-    <span class="meta-badge">{detail.chapters} capítulos</span>
+    <span class="meta-badge">{detail.chapters} chapters</span>
   {/if}
   {#if detail.volumes}
     <span class="meta-badge">{detail.volumes} volumes</span>

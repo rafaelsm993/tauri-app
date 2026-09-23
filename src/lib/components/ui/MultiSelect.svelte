@@ -1,11 +1,5 @@
 <script lang="ts">
-  // ============================================================
-  // MultiSelect — generic "pick any number of options" control.
-  // A trigger button opens a popover panel of native checkboxes.
-  // Popover gives top-layer rendering (never clipped by a scrolling
-  // parent), light-dismiss and Esc for free; the panel is placed
-  // under the trigger and clamped to the viewport.
-  // ============================================================
+  // Popover gives top-layer rendering, light-dismiss and Esc; the panel is clamped to the viewport.
   type Value = string | number;
   type Option = { value: Value; label: string };
 
@@ -33,13 +27,12 @@
   const count = $derived(selected.length);
 
   function toggleValue(value: Value, checked: boolean) {
-    // Rebuild from `options` so the result keeps option order and original types.
     const isOn = (v: Value) => (v === value ? checked : selected.includes(v));
     onchange(options.map((o: Option) => o.value).filter(isOn));
   }
 
-  const GAP = 6; // px between trigger and panel
-  const EDGE = 8; // px kept clear of the viewport edge
+  const GAP = 6;
+  const EDGE = 8;
 
   function place() {
     if (!trigger || !panel) return;
@@ -98,7 +91,7 @@
     {/each}
   </fieldset>
   {#if count > 0}
-    <button type="button" class="ms-clear" onclick={() => onchange([])}>Limpar</button>
+    <button type="button" class="ms-clear" onclick={() => onchange([])}>Clear</button>
   {/if}
 </div>
 

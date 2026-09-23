@@ -3,10 +3,9 @@ use serde_json::{json, Value};
 
 const ENDPOINT: &str = "https://graphql.anilist.co";
 
-// AniList caps Page.perPage at 50; we use 20 to match the other providers.
+// AniList caps perPage at 50; 20 matches the other providers.
 const PAGE_SIZE: u32 = 20;
 
-// Shared media fields used by both list and search queries.
 const MEDIA_LIST_FIELDS: &str = r#"
     id
     type
@@ -59,7 +58,7 @@ const MEDIA_DETAIL_FIELDS: &str = r#"
     trailer { id site thumbnail }
 "#;
 
-// AniList returns errors in `{ errors: [{ message }] }`. Surface them as Err.
+// AniList reports errors in a 200 body as `{ errors: [{ message }] }`.
 fn check_graphql(v: &Value) -> Result<(), String> {
     if let Some(arr) = v.get("errors").and_then(|e| e.as_array()) {
         if !arr.is_empty() {
@@ -85,8 +84,7 @@ async fn graphql(op: &str, query: &str, variables: Value) -> Result<Value, Strin
     Ok(res)
 }
 
-// Build the list/search query. When no search term is provided we sort by
-// popularity so the discover view is meaningful (mirrors the other providers).
+// Without a search term, sorts by popularity so discover matches the other providers.
 fn list_query(media_type: &str) -> String {
     format!(
         r#"
@@ -124,8 +122,6 @@ async fn run_list(
     genre: Option<String>,
 ) -> Result<Value, String> {
     let has_query = !query.trim().is_empty();
-    // Search relevance handles ordering when the user typed something;
-    // otherwise we explicitly request popularity-desc.
     let sort: Vec<&str> = if has_query {
         vec!["SEARCH_MATCH"]
     } else {
@@ -148,7 +144,6 @@ async fn run_list(
     graphql(op, &list_query(media_type), vars).await
 }
 
-// ── ANIME ─────────────────────────────────────────────────
 #[tauri::command]
 pub async fn anilist_search_anime(
     query: &str,
@@ -171,10 +166,9 @@ pub async fn anilist_anime_details(id: u32) -> Result<Value, String> {
     res.get("data")
         .and_then(|d| d.get("Media"))
         .cloned()
-        .ok_or_else(|| "Anime não encontrado.".to_string())
+        .ok_or_else(|| "Anime not found.".to_string())
 }
 
-// ── MANGA ─────────────────────────────────────────────────
 #[tauri::command]
 pub async fn anilist_search_manga(
     query: &str,
@@ -197,11 +191,10 @@ pub async fn anilist_manga_details(id: u32) -> Result<Value, String> {
     res.get("data")
         .and_then(|d| d.get("Media"))
         .cloned()
-        .ok_or_else(|| "Mangá não encontrado.".to_string())
+        .ok_or_else(|| "Manga not found.".to_string())
 }
 
-// ── GENRES ────────────────────────────────────────────────
-// AniList exposes a single `GenreCollection` shared by anime and manga.
+// AniList has one `GenreCollection` shared by anime and manga.
 #[tauri::command]
 pub async fn anilist_genres() -> Result<Value, String> {
     log::debug!("[anilist] genres");

@@ -1,5 +1,3 @@
-// One entry point per operation for every MediaType. Routes and stores call
-// this; it picks the provider service. Components still never call invoke.
 import { TmdbAPI } from "$lib/api/tmdb";
 import { AnilistAPI } from "$lib/api/anilist";
 import { ITunesAPI } from "$lib/api/itunes";
@@ -20,7 +18,6 @@ const EMPTY_PAGE: PaginatedResult<MediaItem> = {
   total_results: 0,
 };
 
-// TMDB genre ids are numbers; AniList/iTunes/RAWG use string slugs.
 const numericGenre = (g: GenreId | null) => (typeof g === "number" ? g : undefined);
 const slugGenre = (g: GenreId | null) => (typeof g === "string" ? g : undefined);
 
@@ -43,8 +40,7 @@ function fetchGenres(cat: MediaType): Promise<GenreOption[]> {
   }
 }
 
-// TMDB and RAWG search get the raw query, AniList and iTunes the trimmed one
-// (unchanged from the original page code).
+// TMDB and RAWG search get the raw query; AniList and iTunes the trimmed one.
 function fetchPage(
   cat: MediaType,
   query: string,
@@ -82,14 +78,13 @@ const NUMERIC_DETAILS: Record<string, ((id: number) => Promise<MediaDetail>) | u
   game: RawgAPI.gameDetails,
 };
 
-// `type` and `id` come straight from the URL, so they are untrusted strings.
-// Rejects with a user-facing message, like a failed Tauri command would.
+// Args come from the URL (untrusted); rejects with a user-facing message.
 function fetchDetail(type: string, id: string): Promise<MediaDetail> {
   if (type === "book") return ITunesAPI.bookDetails(decodeURIComponent(id));
   const load = NUMERIC_DETAILS[type];
-  if (!load) return Promise.reject("Tipo de mídia inválido.");
+  if (!load) return Promise.reject("Invalid media type.");
   const numId = parseInt(id, 10);
-  if (isNaN(numId)) return Promise.reject("ID inválido.");
+  if (isNaN(numId)) return Promise.reject("Invalid ID.");
   return load(numId);
 }
 

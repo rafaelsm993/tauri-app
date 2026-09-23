@@ -20,7 +20,7 @@ class FakeObserver {
     this.disconnected = true;
   }
   fire(isIntersecting: boolean) {
-    if (this.disconnected) return; // real observers stop delivering after disconnect()
+    if (this.disconnected) return;
     this.cb([{ isIntersecting }]);
   }
 }

@@ -3,7 +3,7 @@
   let { isSearch, query, genreName, onClearSearch, onAllGenres } = $props<{
     isSearch: boolean;
     query: string;
-    genreName: string | null; // null = no genre selected
+    genreName: string | null;
     onClearSearch: () => void;
     onAllGenres: () => void;
   }>();
@@ -11,13 +11,13 @@
 
 <p class="page-context">
   {#if isSearch}
-    Resultados para <strong>"{query}"</strong>
-    <button class="link-btn" onclick={onClearSearch}>← Descobrir</button>
+    Results for <strong>"{query}"</strong>
+    <button class="link-btn" onclick={onClearSearch}>← Discover</button>
   {:else if genreName !== null}
     Populares em <strong>{genreName}</strong>
-    <button class="link-btn" onclick={onAllGenres}> ← Todos os gêneros </button>
+    <button class="link-btn" onclick={onAllGenres}> ← All genres </button>
   {:else}
-    Explorar por gênero
+    Browse by genre
   {/if}
 </p>
 

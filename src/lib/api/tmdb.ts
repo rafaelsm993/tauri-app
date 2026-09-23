@@ -1,9 +1,3 @@
-// ================================================================
-// tauri-app — TMDB Service (Movies + TV Series)
-//
-// TMDB returns RELATIVE poster/backdrop paths — frontend prepends the
-// official image CDN via TMDB_IMG. All other providers store absolute URLs.
-// ================================================================
 import { invoke } from "@tauri-apps/api/core";
 import type {
   MediaItem,
@@ -24,7 +18,7 @@ interface RawPage {
 function mapMovie(raw: any): MediaItem {
   return {
     id: raw.id,
-    title: raw.title ?? raw.original_title ?? "Sem título",
+    title: raw.title ?? raw.original_title ?? "Untitled",
     overview: raw.overview ?? "",
     poster_path: TMDB_IMG.poster(raw.poster_path),
     backdrop_path: TMDB_IMG.backdrop(raw.backdrop_path),
@@ -39,7 +33,7 @@ function mapMovie(raw: any): MediaItem {
 function mapTv(raw: any): MediaItem {
   return {
     id: raw.id,
-    title: raw.name ?? raw.original_name ?? "Sem título",
+    title: raw.name ?? raw.original_name ?? "Untitled",
     overview: raw.overview ?? "",
     poster_path: TMDB_IMG.poster(raw.poster_path),
     backdrop_path: TMDB_IMG.backdrop(raw.backdrop_path),
@@ -79,7 +73,7 @@ function mapDetail(raw: any, mt: MediaType): MediaDetail {
   return {
     id: raw.id,
     media_type: mt,
-    title: raw.title ?? raw.name ?? "Sem título",
+    title: raw.title ?? raw.name ?? "Untitled",
     tagline: raw.tagline ?? "",
     overview: raw.overview ?? "",
     poster_path: TMDB_IMG.poster(raw.poster_path, "w500"),

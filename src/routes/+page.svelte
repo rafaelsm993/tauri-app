@@ -21,7 +21,7 @@
   const genreName = $derived(
     browse.activeGenre === null
       ? null
-      : (browse.genres.find((g) => g.id === browse.activeGenre)?.name ?? "gênero"),
+      : (browse.genres.find((g) => g.id === browse.activeGenre)?.name ?? "genre"),
   );
 
   function openDetail(item: MediaItem) {
@@ -42,14 +42,14 @@
   <header class="page-header">
     <SearchBar
       onSearch={(q) => browse.search(q)}
-      placeholder="Buscar filmes, séries, anime, mangá, livros…"
+      placeholder="Search movies, TV shows, anime, manga, books…"
     />
 
     <CategoryTabs active={browse.activeCategory} onchange={(c) => browse.switchCategory(c)}>
       {#snippet trailing()}
         {#if browse.carouselMode && browse.genres.length > 0}
           <MultiSelect
-            label="Gêneros"
+            label="Genres"
             options={browse.genreOptions}
             selected={browse.selectedGenres}
             onchange={(ids) => browse.setSelectedGenres(ids)}
@@ -72,13 +72,13 @@
       {#if browse.error && !browse.carouselMode}
         <div class="page-error">
           <span>⚠ {browse.error}</span>
-          <button onclick={() => browse.loadGrid(browse.query)}>Tentar novamente</button>
+          <button onclick={() => browse.loadGrid(browse.query)}>Try again</button>
         </div>
       {/if}
 
       {#if browse.carouselMode}
         {#if browse.sections.length === 0 && !browse.genresLoading}
-          <p class="page-empty">Nenhum gênero disponível.</p>
+          <p class="page-empty">No genres available.</p>
         {:else}
           {#each browse.visibleSections as section (section.genre.id)}
             <div

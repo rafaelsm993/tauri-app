@@ -1,6 +1,5 @@
 <script lang="ts">
   // Temporary body for routes whose feature hasn't landed yet.
-  // English on purpose: new UI is English-only.
   import { resolve } from "$app/paths";
 
   let { title } = $props<{ title: string }>();

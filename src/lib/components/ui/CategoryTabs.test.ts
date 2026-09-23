@@ -9,23 +9,22 @@ describe("CategoryTabs", () => {
   it("marks only the active category as pressed", () => {
     render(CategoryTabs, { active: "anime", onchange: () => {} });
     expect(screen.getByRole("button", { name: "Anime" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "Jogos" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Games" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("emits the category key on click", async () => {
     const onchange = vi.fn();
     render(CategoryTabs, { active: "movie", onchange });
-    await userEvent.click(screen.getByRole("button", { name: "Jogos" }));
+    await userEvent.click(screen.getByRole("button", { name: "Games" }));
     expect(onchange).toHaveBeenCalledExactlyOnceWith("game");
   });
 
   it("maps every tab to a distinct MediaType key (by value, not label)", async () => {
-    // MEDIA_LABELS is Record<MediaType, string>, so its keys are the runtime MediaType set.
     const mediaTypes = Object.keys(MEDIA_LABELS);
     const onchange = vi.fn();
     render(CategoryTabs, { active: "movie", onchange });
 
-    const nav = screen.getByRole("navigation", { name: "Categorias" });
+    const nav = screen.getByRole("navigation", { name: "Categories" });
     const tabs = within(nav).getAllByRole("button");
     for (const tab of tabs) await userEvent.click(tab);
 
@@ -41,11 +40,10 @@ describe("CategoryTabs", () => {
     }));
     render(CategoryTabs, { active: "movie", onchange: () => {}, trailing });
 
-    const nav = screen.getByRole("navigation", { name: "Categorias" });
+    const nav = screen.getByRole("navigation", { name: "Categories" });
     const extra = screen.getByRole("button", { name: "Extra" });
     expect(within(nav).getAllByRole("button")).toHaveLength(6);
     expect(nav.contains(extra)).toBe(false);
-    // Same bar, after the nav.
     expect(extra.parentElement).toBe(nav.parentElement);
     expect(nav.compareDocumentPosition(extra) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

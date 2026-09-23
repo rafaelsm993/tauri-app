@@ -1,24 +1,19 @@
-// src/lib/stores/ui.svelte.ts
-
 class UIStore {
-  // Hue (0-360) da cor predominante do pôster do filme que está em hover
-  // Se for null, o background volta para a cor padrão (ex: Dourado/Azul)
+  // Hue (0-360) of the hovered poster; null restores the default background.
   activeHue = $state<number | null>(null);
 
-  // Multiplicador de velocidade das partículas (1 = normal, 3 = "Warp Speed" ao clicar)
+  // Particle speed multiplier (1 normal, 3 on click).
   intensity = $state<number>(1);
 
-  // Registra o último clique global para criar uma onda de choque épica no Canvas
+  // Last global click, drives the canvas shockwave.
   lastClick = $state<{ x: number; y: number; time: number } | null>(null);
 
-  // When true, background switches to the geometric detail-page pattern
+  // Switches the background to the detail-page pattern.
   detailMode = $state(false);
 
-  // Métodos utilitários
   triggerClickPulse(x: number, y: number) {
     this.lastClick = { x, y, time: Date.now() };
 
-    // Aumenta a intensidade da animação temporariamente
     this.intensity = 3;
     setTimeout(() => {
       this.intensity = 1;

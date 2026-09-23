@@ -2,16 +2,14 @@ use super::http::{client as http, fetch_json};
 use serde_json::Value;
 
 const BASE: &str = "https://api.themoviedb.org/3";
-const LANG: &str = "pt-BR";
+const LANG: &str = "en-US";
 
-// TMDB API key is loaded at compile time via build.rs from `.env`.
+// Runtime env wins; falls back to the key baked in from `.env` by build.rs.
 fn api_key() -> String {
     std::env::var("TMDB_API_KEY").unwrap_or_else(|_| env!("TMDB_API_KEY").to_string())
 }
 
-// ── MOVIES ─────────────────────────────────────────────────
-// `genre` is an optional TMDB genre id. When supplied we switch to the
-// /discover/movie endpoint with `with_genres`; otherwise we use /movie/popular.
+// A genre id switches from /movie/popular to /discover/movie with `with_genres`.
 #[tauri::command]
 pub async fn tmdb_discover_movies(page: u32, genre: Option<u32>) -> Result<Value, String> {
     log::debug!("[tmdb] discover_movies  page={} genre={:?}", page, genre);
@@ -90,7 +88,6 @@ pub async fn tmdb_movie_details(id: u32) -> Result<Value, String> {
     Ok(res)
 }
 
-// ── TV SERIES ──────────────────────────────────────────────
 #[tauri::command]
 pub async fn tmdb_discover_tv(page: u32, genre: Option<u32>) -> Result<Value, String> {
     log::debug!("[tmdb] discover_tv  page={} genre={:?}", page, genre);
@@ -166,9 +163,18 @@ pub async fn tmdb_tv_details(id: u32) -> Result<Value, String> {
         ]),
     )
     .await?;
-    // Surface TMDB error envelopes so the UI sees real messages.
     if let Some(status_msg) = res.get("status_message").and_then(|v| v.as_str()) {
         return Err(status_msg.to_string());
     }
     Ok(res)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn requests_english_content() {
+        assert_eq!(LANG, "en-US");
+    }
 }

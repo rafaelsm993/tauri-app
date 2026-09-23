@@ -3,15 +3,21 @@ use serde_json::Value;
 
 const BASE: &str = "https://itunes.apple.com";
 const PAGE_SIZE: u32 = 20;
+const COUNTRY: &str = "us";
 
-// iTunes Search API — fully public, keyless, no daily quota documented.
+// Folds the genre keyword into the term; Apple ignores `genreId` for ebooks.
+fn search_term(query: &str, genre: Option<&str>) -> String {
+    let trimmed = query.trim();
+    let has_query = !trimmed.is_empty() && trimmed != "popular";
+    let genre_kw = genre.map(str::trim).filter(|s| !s.is_empty());
+    match (has_query, genre_kw) {
+        (true, Some(g)) => format!("{trimmed} {g}"),
+        (true, None) => trimmed.to_string(),
+        (false, Some(g)) => g.to_string(),
+        (false, None) => "fiction".to_string(),
+    }
+}
 
-// ── SEARCH ─────────────────────────────────────────────────
-// /search supports media + term + limit + offset. Apple's `genreId` filter
-// is silently ignored for `media=ebook`, so the only way to narrow by genre
-// is to bake a Portuguese keyword into the `term` itself and let Apple's
-// relevance ranking do the filtering. The frontend ships those keywords as
-// the `genre` argument (e.g. "romance", "fantasia", "mistério").
 #[tauri::command]
 pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Result<Value, String> {
     log::debug!(
@@ -20,16 +26,7 @@ pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Res
         page,
         genre
     );
-    let trimmed = query.trim();
-    let has_query = !trimmed.is_empty() && trimmed != "popular";
-    let genre_kw = genre.as_deref().map(str::trim).filter(|s| !s.is_empty());
-
-    let term = match (has_query, genre_kw) {
-        (true, Some(g)) => format!("{trimmed} {g}"),
-        (true, None) => trimmed.to_string(),
-        (false, Some(g)) => g.to_string(),
-        (false, None) => "fiction".to_string(),
-    };
+    let term = search_term(query, genre.as_deref());
 
     let offset = ((page.saturating_sub(1)) * PAGE_SIZE).to_string();
     let limit = PAGE_SIZE.to_string();
@@ -39,6 +36,7 @@ pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Res
         "search",
         http().get(format!("{BASE}/search")).query(&[
             ("media", "ebook"),
+            ("country", COUNTRY),
             ("term", term.as_str()),
             ("limit", limit.as_str()),
             ("offset", offset.as_str()),
@@ -54,16 +52,16 @@ pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Res
     Ok(res)
 }
 
-// ── DETAILS ────────────────────────────────────────────────
-// /lookup?id={trackId} returns a single result. We omit media filter because
-// /lookup is brittle when combined with media=ebook.
+// Omits the media filter because /lookup is brittle with media=ebook.
 #[tauri::command]
 pub async fn itunes_details(id: &str) -> Result<Value, String> {
     log::debug!("[itunes] details  id={}", id);
     let res = fetch_json(
         "itunes",
         "details",
-        http().get(format!("{BASE}/lookup")).query(&[("id", id)]),
+        http()
+            .get(format!("{BASE}/lookup"))
+            .query(&[("id", id), ("country", COUNTRY)]),
     )
     .await?;
 
@@ -72,8 +70,29 @@ pub async fn itunes_details(id: &str) -> Result<Value, String> {
         .and_then(|r| r.as_array())
         .and_then(|arr| arr.first())
         .cloned()
-        .ok_or_else(|| "Livro não encontrado.".to_string())?;
+        .ok_or_else(|| "Book not found.".to_string())?;
 
     log::debug!("[itunes] details → name={:?}", first.get("trackName"));
     Ok(first)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn search_term_combines_query_and_genre() {
+        assert_eq!(
+            search_term("dune", Some("science fiction")),
+            "dune science fiction"
+        );
+        assert_eq!(search_term("  dune  ", None), "dune");
+        assert_eq!(search_term("popular", Some("mystery")), "mystery");
+        assert_eq!(search_term("", Some("  ")), "fiction");
+    }
+
+    #[test]
+    fn uses_the_us_store() {
+        assert_eq!(COUNTRY, "us");
+    }
 }

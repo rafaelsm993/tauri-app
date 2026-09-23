@@ -1,7 +1,4 @@
-// scripts/no-auth.test.mjs
-// Structural guard: the app must contain only Home + Detail, with no
-// account, login, or watchlist code in either stack.
-// Run from the repo root:  node --test scripts/no-auth.test.mjs
+// Structural guard: only Home + Detail, no account, login, or watchlist code.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";

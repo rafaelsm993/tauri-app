@@ -1,7 +1,6 @@
 <script lang="ts">
-  // Floating "back to top" control. Scrolls the window (the document is the
-  // scroller in this app — `.app-content` has no overflow of its own).
-  let { threshold, label = "Voltar ao topo" } = $props<{
+  // Scrolls the window: the document is the scroller, `.app-content` has no overflow.
+  let { threshold, label = "Back to top" } = $props<{
     /** Pixels scrolled before the button appears. Defaults to one viewport height. */
     threshold?: number;
     label?: string;
@@ -12,7 +11,6 @@
 
   const visible = $derived(scrollY > (threshold ?? viewportHeight));
 
-  // Side effect only: subscribe to window scroll/resize (passive) and clean up.
   $effect(() => {
     const read = () => {
       scrollY = window.scrollY;
@@ -29,7 +27,6 @@
 
   function scrollToTop() {
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    // "instant" rather than "auto": global.css sets `html { scroll-behavior: smooth }`.
     window.scrollTo({ top: 0, behavior: reduce ? "instant" : "smooth" });
   }
 </script>

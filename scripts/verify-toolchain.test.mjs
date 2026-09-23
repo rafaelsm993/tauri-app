@@ -1,8 +1,4 @@
-// scripts/verify-toolchain.test.mjs
-// Verifies the build prerequisites for tauri-app on whichever machine runs it.
-//   Windows laptop:  PS> powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
-//   Arch desktop:    $ node --test scripts/verify-toolchain.test.mjs
-// Windows-only checks are skipped on Linux and vice versa.
+// Verifies build prerequisites; Windows-only and Linux-only checks skip on the other OS.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -20,7 +16,6 @@ function run(cmd, args) {
   return execFileSync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 }
 
-// ── Both machines ─────────────────────────────────────────
 test("cargo is reachable and reports a stable version", () => {
   const out = run("cargo", ["--version"]);
   assert.match(out, /^cargo \d+\.\d+\.\d+/, `unexpected cargo version line: ${out}`);
@@ -68,7 +63,6 @@ test("the build/run runbook covers both machines", () => {
   assert.match(doc, /## Linux native/, "runbook has no Linux-native section");
 });
 
-// ── Windows laptop only ───────────────────────────────────
 test("the active rust toolchain targets x86_64-pc-windows-msvc", { skip: !WIN }, () => {
   const out = run("rustc", ["-vV"]);
   assert.match(out, /host: x86_64-pc-windows-msvc/, `rustc is not MSVC-hosted:\n${out}`);
@@ -84,7 +78,6 @@ test("a WebView2 runtime is installed", { skip: !WIN }, () => {
   assert.ok(existsSync(base), `WebView2 runtime directory missing: ${base}`);
 });
 
-// ── Arch desktop (native Linux) only ──────────────────────
 test("the active rust toolchain targets x86_64-unknown-linux-gnu", { skip: !LINUX }, () => {
   const out = run("rustc", ["-vV"]);
   assert.match(out, /host: x86_64-unknown-linux-gnu/, `rustc is not linux-gnu-hosted:\n${out}`);

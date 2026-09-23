@@ -36,7 +36,7 @@
     try {
       detail = await catalog.fetchDetail(type, id);
     } catch (e) {
-      error = errorMessage(e, "Erro ao carregar detalhes.");
+      error = errorMessage(e, "Failed to load details.");
     } finally {
       loading = false;
     }
@@ -57,8 +57,8 @@
 {:else if error}
   <div class="detail-error">
     <span>⚠ {error}</span>
-    <button onclick={retry}>Tentar novamente</button>
-    <button onclick={goHome}>← Voltar</button>
+    <button onclick={retry}>Try again</button>
+    <button onclick={goHome}>← Back</button>
   </div>
 {:else if detail}
   <DetailHero
@@ -73,7 +73,7 @@
       {#if detail.poster_path}
         <img src={detail.poster_path} alt={detail.title} class="poster-img" />
       {:else}
-        <div class="poster-placeholder">Sem poster</div>
+        <div class="poster-placeholder">No poster</div>
       {/if}
     </aside>
 
@@ -91,13 +91,13 @@
       {/if}
 
       {#if detail.screenshots && detail.screenshots.length > 0}
-        <DetailSection title="Capturas">
+        <DetailSection title="Screenshots">
           <ScreenshotStrip screenshots={detail.screenshots} />
         </DetailSection>
       {/if}
 
       {#if detail.cast.length > 0}
-        <DetailSection title="Elenco">
+        <DetailSection title="Cast">
           <CastRow cast={detail.cast} />
         </DetailSection>
       {/if}

@@ -1,12 +1,10 @@
 import { test as base } from "@playwright/test";
 
-// Deterministic data for every command the home + detail screens call on first paint
-// (default category is "movie", so only TMDB commands are needed). Unknown commands
-// get an empty page so the UI renders its empty state instead of crashing.
+// Deterministic IPC fixtures; unknown commands get an empty page so the UI shows its empty state.
 const MOVIE = (id: number) => ({
   id,
-  title: `Filme de teste ${id} com um título bem comprido para quebrar layout`,
-  overview: "Sinopse de teste. ".repeat(12),
+  title: `Test movie ${id} with a very long title to break the layout`,
+  overview: "Test synopsis. ".repeat(12),
   poster_path: null,
   backdrop_path: null,
   vote_average: 7.4,
@@ -19,25 +17,25 @@ const FIXTURES: Record<string, unknown> = {
   // Real TMDB count (19): the home page renders one lazy carousel per genre.
   tmdb_genres_movies: {
     genres: [
-      [28, "Ação"],
-      [12, "Aventura"],
-      [16, "Animação"],
-      [35, "Comédia"],
+      [28, "Action"],
+      [12, "Adventure"],
+      [16, "Animation"],
+      [35, "Comedy"],
       [80, "Crime"],
-      [99, "Documentário"],
+      [99, "Documentary"],
       [18, "Drama"],
-      [10751, "Família"],
-      [14, "Fantasia"],
-      [36, "História"],
-      [27, "Terror"],
-      [10402, "Música"],
-      [9648, "Mistério"],
+      [10751, "Family"],
+      [14, "Fantasy"],
+      [36, "History"],
+      [27, "Horror"],
+      [10402, "Music"],
+      [9648, "Mystery"],
       [10749, "Romance"],
-      [878, "Ficção científica"],
-      [10770, "Cinema TV"],
+      [878, "Science Fiction"],
+      [10770, "TV Movie"],
       [53, "Thriller"],
-      [10752, "Guerra"],
-      [37, "Faroeste"],
+      [10752, "War"],
+      [37, "Western"],
     ].map(([id, name]) => ({ id, name })),
   },
   tmdb_discover_movies: {
@@ -50,7 +48,7 @@ const FIXTURES: Record<string, unknown> = {
     ...MOVIE(1),
     tagline: "Tagline",
     runtime: 128,
-    genres: [{ id: 28, name: "Ação" }],
+    genres: [{ id: 28, name: "Action" }],
     credits: { cast: [] },
     videos: { results: [] },
     production_companies: [],
@@ -61,8 +59,6 @@ export const test = base.extend({
   page: async ({ page }, use) => {
     await page.addInitScript((fixtures) => {
       const empty = { page: 1, total_pages: 1, total_results: 0, results: [], genres: [] };
-      // Shape consumed by @tauri-apps/api/core `invoke()`.
-      // Every command name, in call order: lets tests assert request volume.
       const calls: string[] = [];
       Object.assign(window, { __ipcCalls: calls });
       (window as any).__TAURI_INTERNALS__ = {

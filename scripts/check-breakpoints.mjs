@@ -1,5 +1,4 @@
-// Fails if a component uses a raw-px @media query instead of the $bp-* tokens / mixins.
-// global.css is plain CSS (no SCSS vars) and is exempt; keep its values equal to the tokens.
+// Fails on raw-px @media in components; global.css is exempt but must match the tokens.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 

@@ -5,17 +5,13 @@ pub mod logging;
 use tauri::Manager;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 
-/// Dev builds only: `TAURI_APP_DEVTOOLS=1 npm run tauri dev` opens the Web Inspector on start.
-/// Opt-in because a docked inspector costs viewport and CPU on every run; right-click →
-/// Inspect Element still works regardless (see `tauri.conf.json`'s `devtools: true`).
+/// Dev-only opt-in (`TAURI_APP_DEVTOOLS=1`) since a docked inspector costs viewport and CPU.
 #[cfg(debug_assertions)]
 fn devtools_requested(value: Option<&str>) -> bool {
     value.is_some_and(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
 }
 
-/// Log targets: terminal (and logcat on Android) plus a rotating file in the
-/// platform app-log dir. Rust logs are deliberately NOT mirrored into the
-/// devtools console: that stays frontend-only (see src/lib/logging/console.ts).
+/// Rust logs go to terminal/logcat and a rotating file, deliberately not the devtools console.
 fn log_targets() -> Vec<Target> {
     vec![
         Target::new(TargetKind::Stdout),
@@ -31,8 +27,6 @@ fn log_plugin<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
     let mut builder = tauri_plugin_log::Builder::new()
         .level(level)
         .targets(log_targets())
-        // Default is 40 KB and delete-on-rotate: a normal session would wipe
-        // the file within minutes, and on Android it is the only durable log.
         .max_file_size(5_000_000)
         .rotation_strategy(RotationStrategy::KeepSome(3))
         .timezone_strategy(TimezoneStrategy::UseLocal);
@@ -57,7 +51,6 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            // ── TMDB (movies + series) ──
             api::tmdb::tmdb_discover_movies,
             api::tmdb::tmdb_search_movies,
             api::tmdb::tmdb_movie_details,
@@ -66,7 +59,6 @@ pub fn run() {
             api::tmdb::tmdb_search_tv,
             api::tmdb::tmdb_tv_details,
             api::tmdb::tmdb_genres_tv,
-            // ── AniList / iTunes (anime, manga, books) ──
             api::anilist::anilist_search_anime,
             api::anilist::anilist_anime_details,
             api::anilist::anilist_search_manga,
@@ -74,7 +66,6 @@ pub fn run() {
             api::anilist::anilist_genres,
             api::itunes::itunes_search,
             api::itunes::itunes_details,
-            // ── RAWG (games) ──
             api::rawg::rawg_search,
             api::rawg::rawg_discover,
             api::rawg::rawg_details,

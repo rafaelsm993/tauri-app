@@ -2,7 +2,7 @@
   import { fade, scale } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
 
-  let { placeholder = "Busque filmes, séries, animes...", onSearch } = $props<{
+  let { placeholder = "Search movies, TV shows, anime...", onSearch } = $props<{
     placeholder?: string;
     onSearch?: (query: string) => void;
   }>();
@@ -60,7 +60,7 @@
     {placeholder}
     onfocus={() => (isFocused = true)}
     onblur={() => (isFocused = false)}
-    aria-label="Campo de pesquisa"
+    aria-label="Search field"
   />
 
   {#if query.length > 0 && !loading}
@@ -70,7 +70,7 @@
       onclick={handleClear}
       in:scale={{ duration: 200, easing: cubicOut }}
       out:fade={{ duration: 150 }}
-      aria-label="Limpar pesquisa"
+      aria-label="Clear search"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
         <line x1="18" y1="6" x2="6" y2="18"></line>

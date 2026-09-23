@@ -1,6 +1,5 @@
 <script lang="ts">
-  // Flat results grid for search / single-genre browsing, with skeletons and
-  // infinite scroll. Owns its IntersectionObserver.
+  // Flat results grid with skeletons and infinite scroll.
   import type { MediaItem } from "$lib/types/media";
   import MediaCard from "$lib/components/media/MediaCard.svelte";
 
@@ -16,8 +15,7 @@
 
   let sentinel = $state<HTMLDivElement | undefined>(undefined);
 
-  // DOM side effect: re-attaches when the sentinel re-renders; the cleanup
-  // disconnects the previous observer (also on unmount).
+  // Re-attaches when the sentinel re-renders; cleanup disconnects the previous observer.
   $effect(() => {
     if (loading || items.length === 0 || !sentinel) return;
     const observer = new IntersectionObserver(
@@ -46,7 +44,7 @@
     {/each}
   </div>
 {:else if !hasError && items.length === 0}
-  <p class="page-empty">Nenhum resultado encontrado.</p>
+  <p class="page-empty">No results found.</p>
 {:else}
   <div class="grid">
     {#each items as item, i (`${item.media_type}-${item.id}-${i}`)}
@@ -63,7 +61,7 @@
   {#if hasMore}
     <div bind:this={sentinel} class="sentinel" aria-hidden="true"></div>
   {:else if items.length > 0 && !appending}
-    <p class="page-end">— Fim dos resultados —</p>
+    <p class="page-end">— End of results —</p>
   {/if}
 {/if}
 

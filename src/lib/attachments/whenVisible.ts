@@ -1,11 +1,6 @@
-// Svelte attachment: run `cb` once, when the element first comes near the
-// viewport. Used to lazy-load home carousels so a category with ~20 genres
-// doesn't fire ~20 requests on first paint (provider rate limits; see the
-// request-layer story S2·B6 for the real cache/back-off).
-//
-//   <div {@attach whenVisible(() => load())}>…</div>
 import type { Attachment } from "svelte/attachments";
 
+// Runs cb once when the element nears the viewport; lazy-loads carousels.
 export function whenVisible(
   cb: () => void,
   { rootMargin = "0px" }: { rootMargin?: string } = {},

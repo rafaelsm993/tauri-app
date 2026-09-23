@@ -1,11 +1,5 @@
 <script lang="ts">
-  // ============================================================
-  // GenreCarousel — horizontally-scrolling row of MediaCards used
-  // on the home page to surface one genre at a time. The internal
-  // scroll container snaps to card boundaries; left/right arrow
-  // buttons appear on hover and are hidden when there is nothing
-  // to scroll in that direction.
-  // ============================================================
+  // Snap-scrolling row of MediaCards for one genre on the home page.
   import type { MediaItem } from "$lib/types/media";
   import MediaCard from "$lib/components/media/MediaCard.svelte";
 
@@ -39,8 +33,6 @@
 
   function scrollByAmount(dir: -1 | 1) {
     if (!railEl) return;
-    // Scroll by ~85% of the visible width so the user always sees a couple
-    // of cards from the previous page for spatial continuity.
     const amount = Math.round(railEl.clientWidth * 0.85) * dir;
     railEl.scrollBy({ left: amount, behavior: "smooth" });
   }
@@ -54,7 +46,7 @@
   <header class="carousel-head">
     <h2 class="carousel-title">{title}</h2>
     {#if onSeeMore && !loading && items.length > 0}
-      <button type="button" class="see-more" onclick={onSeeMore}> Ver todos → </button>
+      <button type="button" class="see-more" onclick={onSeeMore}> See all → </button>
     {/if}
   </header>
 
@@ -63,7 +55,7 @@
       <button
         type="button"
         class="nav-btn nav-btn-left"
-        aria-label="Anterior"
+        aria-label="Previous"
         onclick={() => scrollByAmount(-1)}
       >
         ‹
@@ -83,11 +75,11 @@
         <p class="rail-error">
           ⚠ {error}
           {#if onRetry}
-            <button type="button" class="retry-btn" onclick={onRetry}>Tentar novamente</button>
+            <button type="button" class="retry-btn" onclick={onRetry}>Try again</button>
           {/if}
         </p>
       {:else if items.length === 0}
-        <p class="rail-empty">Nenhum item disponível.</p>
+        <p class="rail-empty">No items available.</p>
       {:else}
         {#each items as item, i (`${item.media_type}-${item.id}-${i}`)}
           <div class="rail-item" role="listitem">
@@ -101,7 +93,7 @@
       <button
         type="button"
         class="nav-btn nav-btn-right"
-        aria-label="Próximo"
+        aria-label="Next"
         onclick={() => scrollByAmount(1)}
       >
         ›

@@ -21,7 +21,7 @@ describe("formatRuntime", () => {
   });
 
   it("formats books as pages", () => {
-    expect(formatRuntime(320, "book")).toBe("320 páginas");
+    expect(formatRuntime(320, "book")).toBe("320 pages");
   });
 
   it("is empty when unknown", () => {

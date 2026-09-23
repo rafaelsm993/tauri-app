@@ -1,15 +1,8 @@
-//! Pure helpers for the debug-logging setup (A8). Kept side-effect-free and
-//! unit-tested directly; `lib.rs` wires them into the `tauri-plugin-log`
-//! builder, which is not itself unit-testable.
-//!
-//! Secret handling lives in `api::http`: `request_error`/`fetch_json` strip
-//! the request URL (which carries API keys) from every provider error before
-//! it is logged or returned to the UI.
+//! Pure, unit-tested helpers for the `tauri-plugin-log` setup wired in `lib.rs`.
 
 use log::LevelFilter;
 
-/// Default level when `TAURI_APP_LOG` is unset: `Debug` in dev builds so
-/// request lines and `console.debug` show up, `Info` in release builds.
+/// `Debug` in dev builds, `Info` in release, when `TAURI_APP_LOG` is unset.
 pub fn default_level(dev_build: bool) -> LevelFilter {
     if dev_build {
         LevelFilter::Debug
@@ -18,9 +11,7 @@ pub fn default_level(dev_build: bool) -> LevelFilter {
     }
 }
 
-/// Maps the `TAURI_APP_LOG` env var to a `LevelFilter`.
-/// Unset, empty, or unrecognised values fall back to `default`, so a typo
-/// never silently turns logging all the way up (`Trace`) or off (`Off`).
+/// Unrecognised `TAURI_APP_LOG` values fall back to `default` so a typo never means `Trace` or `Off`.
 pub fn level_from_env(value: Option<&str>, default: LevelFilter) -> LevelFilter {
     match value.map(str::trim).map(str::to_ascii_lowercase).as_deref() {
         Some("trace") => LevelFilter::Trace,
@@ -33,9 +24,7 @@ pub fn level_from_env(value: Option<&str>, default: LevelFilter) -> LevelFilter 
     }
 }
 
-/// Third-party crates whose debug output would drown ours (connection pool,
-/// TLS handshakes, window events). Capped at `Info` unless the user asks for
-/// `trace`, which means "show me everything".
+/// Noisy third-party crates, capped at `Info` unless `trace` is requested.
 pub const NOISY_CRATES: &[&str] = &["hyper", "hyper_util", "reqwest", "rustls", "tao", "wry"];
 
 pub fn noisy_crate_level(level: LevelFilter) -> LevelFilter {

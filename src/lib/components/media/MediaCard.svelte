@@ -10,22 +10,18 @@
   let loaded = $state(false);
   let errored = $state(false);
 
-  // $derived ensures these re-evaluate if item prop changes
   const poster = $derived(getPosterUrl(item));
   const year = $derived(getYear(item));
   const rating = $derived(getRating(item));
-  const badge = $derived(MEDIA_LABELS[item.media_type as MediaType] ?? "Mídia");
+  const badge = $derived(MEDIA_LABELS[item.media_type as MediaType] ?? "Media");
 </script>
 
 <button class="card" {onclick} type="button">
-  <!-- Poster area -->
   <div class="card__poster">
-    <!-- Shimmer skeleton while image loads -->
     {#if poster && !loaded && !errored}
       <div class="card__shimmer" aria-hidden="true"></div>
     {/if}
 
-    <!-- Actual poster image -->
     {#if poster && !errored}
       <img
         src={poster}
@@ -38,7 +34,6 @@
       />
     {/if}
 
-    <!-- No-poster fallback -->
     {#if !poster || errored}
       <div class="card__no-poster" aria-hidden="true">
         <svg
@@ -56,7 +51,6 @@
       </div>
     {/if}
 
-    <!-- Overlay: revealed on hover -->
     <div class="card__overlay" aria-hidden="true">
       <div class="card__overlay-top">
         <span class="card__type">{badge}</span>
@@ -85,14 +79,13 @@
           {/if}
           {#if item.vote_count > 0}
             <span>·</span>
-            <span>{item.vote_count.toLocaleString("pt-BR")} avaliações</span>
+            <span>{item.vote_count.toLocaleString("en-US")} ratings</span>
           {/if}
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Static label below poster (always visible) -->
   <div class="card__label">
     <span class="card__label-title">{item.title}</span>
     {#if year}<span class="card__label-year">{year}</span>{/if}

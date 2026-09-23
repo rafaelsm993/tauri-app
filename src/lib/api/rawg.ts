@@ -1,9 +1,3 @@
-// ================================================================
-// tauri-app — RAWG Service (Games)
-//
-// RAWG covers ~870k games across all platforms (Steam, Epic, Riot, mobile,
-// retro consoles). Image URLs are absolute, hosted on media.rawg.io.
-// ================================================================
 import { invoke } from "@tauri-apps/api/core";
 import type { MediaItem, MediaDetail, PaginatedResult, GenreOption } from "$lib/types/media";
 
@@ -14,7 +8,6 @@ interface RawPage {
   total_results: number;
 }
 
-// Strip HTML tags from descriptions (RAWG ships <p>, <br>, etc.).
 function stripHtml(s: string | null | undefined): string {
   if (!s) return "";
   return s
@@ -24,13 +17,12 @@ function stripHtml(s: string | null | undefined): string {
 }
 
 function map(raw: any): MediaItem {
-  // RAWG `rating` is on a 0–5 scale; double it to match other providers' 0–10.
   const rating = raw.rating ? +(raw.rating * 2).toFixed(1) : 0;
   const year = (raw.released ?? "").slice(0, 4);
   return {
     id: raw.id,
-    title: raw.name ?? "Sem título",
-    overview: "", // not returned in list endpoints
+    title: raw.name ?? "Untitled",
+    overview: "",
     poster_path: raw.background_image ?? null,
     backdrop_path: raw.background_image ?? null,
     vote_average: rating,
@@ -55,7 +47,6 @@ function mapDetail(raw: any): MediaDetail {
     ? raw.genres.map((g: any) => ({ id: g.id, name: g.name ?? "" }))
     : [];
 
-  // Dedupe platforms by name (RAWG returns sub-versions like "PS4" + "PS5").
   const platformSet = new Set<string>();
   if (Array.isArray(raw.platforms)) {
     for (const p of raw.platforms) {
@@ -71,7 +62,7 @@ function mapDetail(raw: any): MediaDetail {
   return {
     id: raw.id,
     media_type: "game",
-    title: raw.name ?? "Sem título",
+    title: raw.name ?? "Untitled",
     tagline:
       Array.isArray(raw.developers) && raw.developers.length
         ? raw.developers.map((d: any) => d.name).join(", ")
@@ -82,11 +73,11 @@ function mapDetail(raw: any): MediaDetail {
     vote_average: rating,
     vote_count: raw.ratings_count ?? 0,
     release_date: raw.released ?? "",
-    runtime: raw.playtime ? raw.playtime * 60 : null, // hours → minutes
+    runtime: raw.playtime ? raw.playtime * 60 : null,
     genres,
     cast: [],
     videos: [],
-    status: raw.tba ? "Em breve" : undefined,
+    status: raw.tba ? "Coming soon" : undefined,
     developer: Array.isArray(raw.developers)
       ? raw.developers.map((d: any) => d.name).join(", ")
       : "",
@@ -99,8 +90,6 @@ function mapDetail(raw: any): MediaDetail {
   };
 }
 
-// RAWG `genres` endpoint returns paginated { count, results: [{ id, slug, name }] }.
-// We pass the slug back to discover/search for cleaner URLs.
 interface RawRawgGenres {
   results: { id: number; slug: string; name: string }[];
 }

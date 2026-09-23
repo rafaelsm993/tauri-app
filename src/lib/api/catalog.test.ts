@@ -61,12 +61,12 @@ describe("catalog.fetchPage", () => {
 describe("catalog.fetchDetail", () => {
   it("rejects a non-numeric id for numeric providers without calling IPC", async () => {
     const calls = record();
-    await expect(catalog.fetchDetail("movie", "abc")).rejects.toBe("ID inválido.");
+    await expect(catalog.fetchDetail("movie", "abc")).rejects.toBe("Invalid ID.");
     expect(calls).toEqual([]);
   });
 
   it("rejects an unknown media type", async () => {
-    await expect(catalog.fetchDetail("podcast", "1")).rejects.toBe("Tipo de mídia inválido.");
+    await expect(catalog.fetchDetail("podcast", "1")).rejects.toBe("Invalid media type.");
   });
 
   it("book ids are URI-decoded strings", async () => {

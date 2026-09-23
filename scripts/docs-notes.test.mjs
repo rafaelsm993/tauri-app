@@ -1,7 +1,4 @@
-// scripts/docs-notes.test.mjs
-// Guards docs/notes/ (migrated from the Obsidian vault) against drifting
-// back to the removed auth/watchlist/cloud layer or away from the code.
-// Run from the repo root:  node --test scripts/docs-notes.test.mjs
+// Guards docs/notes/ against drifting back to the removed auth/watchlist/cloud layer.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";

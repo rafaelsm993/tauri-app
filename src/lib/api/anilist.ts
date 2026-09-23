@@ -1,11 +1,3 @@
-// ================================================================
-// tauri-app — AniList Service (Anime + Manga)
-//
-// AniList is GraphQL-based; the Rust backend issues the actual HTTP POST
-// and returns the unwrapped GraphQL `data.Page` / `data.Media` payloads.
-// AniList shares the same `GenreCollection` for anime and manga, so both
-// service methods point at the same underlying command.
-// ================================================================
 import { invoke } from "@tauri-apps/api/core";
 import type {
   MediaItem,
@@ -30,10 +22,9 @@ interface RawAnilistPage {
   };
 }
 
-// Pick the most appropriate localised title.
-function pickTitle(title: any): string {
-  if (!title) return "Sem título";
-  return title.userPreferred || title.english || title.romaji || title.native || "Sem título";
+export function pickTitle(title: any): string {
+  if (!title) return "Untitled";
+  return title.english || title.romaji || title.native || "Untitled";
 }
 
 function pickPoster(cover: any): string | null {
@@ -48,7 +39,7 @@ function fuzzyDate(d: any): string {
   return `${d.year}-${m}-${day}`;
 }
 
-// AniList scores are 0-100; convert to the 0-10 scale used elsewhere.
+// AniList scores are 0-100; convert to 0-10.
 function score10(s: number | null | undefined): number {
   return typeof s === "number" && s > 0 ? +(s / 10).toFixed(1) : 0;
 }
@@ -138,7 +129,6 @@ function mapDetail(raw: any, mt: MediaType): MediaDetail {
   };
 }
 
-// Genres are returned as a flat string array shared across anime and manga.
 function mapGenres(raw: string[]): GenreOption[] {
   return (raw ?? []).map((name) => ({ id: name, name }));
 }
@@ -162,7 +152,5 @@ export const AnilistAPI = {
 
   animeGenres: (): Promise<GenreOption[]> => invoke<string[]>("anilist_genres").then(mapGenres),
 
-  // Same underlying GenreCollection for both — exposed twice to keep the
-  // home page's per-category genre cache trivial.
   mangaGenres: (): Promise<GenreOption[]> => invoke<string[]>("anilist_genres").then(mapGenres),
 };
