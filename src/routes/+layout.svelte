@@ -2,17 +2,12 @@
   import "$lib/styles/global.css";
   import AppBackground from "$lib/components/ui/AppBackground.svelte";
   import type { Snippet } from "svelte";
-  import { attachConsole } from "@tauri-apps/plugin-log";
+  import { forwardConsole } from "$lib/logging/console";
 
   let { children } = $props<{ children: Snippet }>();
 
-  $effect(() => {
-    let detach: (() => void) | undefined;
-    attachConsole().then((fn) => {
-      detach = fn;
-    });
-    return () => detach?.();
-  });
+  // Side effect only (patches console.*), per the $effect rule in AGENTS.md.
+  $effect(() => forwardConsole());
 </script>
 
 <AppBackground />

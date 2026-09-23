@@ -1,4 +1,4 @@
-use super::http::client as http;
+use super::http::{client as http, request_error};
 use serde_json::Value;
 
 const BASE: &str = "https://itunes.apple.com";
@@ -44,13 +44,10 @@ pub async fn itunes_search(query: &str, page: u32, genre: Option<String>) -> Res
         ])
         .send()
         .await
-        .map_err(|e| {
-            log::error!("[itunes] ERROR: {e}");
-            e.to_string()
-        })?
+        .map_err(|e| request_error("itunes", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("itunes", e))?;
 
     log::info!(
         "[itunes] search → {} results (term={:?})",
@@ -71,13 +68,10 @@ pub async fn itunes_details(id: &str) -> Result<Value, String> {
         .query(&[("id", id)])
         .send()
         .await
-        .map_err(|e| {
-            log::error!("[itunes] ERROR: {e}");
-            e.to_string()
-        })?
+        .map_err(|e| request_error("itunes", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("itunes", e))?;
 
     let first = res
         .get("results")

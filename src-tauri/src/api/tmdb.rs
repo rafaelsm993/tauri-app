@@ -1,4 +1,4 @@
-use super::http::client as http;
+use super::http::{client as http, request_error};
 use serde_json::Value;
 
 const BASE: &str = "https://api.themoviedb.org/3";
@@ -42,16 +42,10 @@ pub async fn tmdb_discover_movies(page: u32, genre: Option<u32>) -> Result<Value
     };
     let res = req
         .await
-        .map_err(|e| {
-            log::error!(
-                "[tmdb] ERROR: {}",
-                crate::logging::redact(&e.to_string(), &key)
-            );
-            e.to_string()
-        })?
+        .map_err(|e| request_error("tmdb", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("tmdb", e))?;
     Ok(res)
 }
 
@@ -64,10 +58,10 @@ pub async fn tmdb_genres_movies() -> Result<Value, String> {
         .query(&[("api_key", key.as_str()), ("language", LANG)])
         .send()
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("tmdb", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("tmdb", e))?;
     Ok(res)
 }
 
@@ -87,10 +81,10 @@ pub async fn tmdb_search_movies(query: &str, page: u32) -> Result<Value, String>
         ])
         .send()
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("tmdb", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("tmdb", e))?;
     Ok(res)
 }
 
@@ -107,10 +101,10 @@ pub async fn tmdb_movie_details(id: u32) -> Result<Value, String> {
         ])
         .send()
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("tmdb", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("tmdb", e))?;
     Ok(res)
 }
 
@@ -145,10 +139,10 @@ pub async fn tmdb_discover_tv(page: u32, genre: Option<u32>) -> Result<Value, St
     };
     let res = req
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("tmdb", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("tmdb", e))?;
     Ok(res)
 }
 
@@ -161,10 +155,10 @@ pub async fn tmdb_genres_tv() -> Result<Value, String> {
         .query(&[("api_key", key.as_str()), ("language", LANG)])
         .send()
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("tmdb", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("tmdb", e))?;
     Ok(res)
 }
 
@@ -184,10 +178,10 @@ pub async fn tmdb_search_tv(query: &str, page: u32) -> Result<Value, String> {
         ])
         .send()
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("tmdb", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("tmdb", e))?;
     Ok(res)
 }
 
@@ -204,10 +198,10 @@ pub async fn tmdb_tv_details(id: u32) -> Result<Value, String> {
         ])
         .send()
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("tmdb", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("tmdb", e))?;
     // Surface TMDB error envelopes so the UI sees real messages.
     if let Some(status_msg) = res.get("status_message").and_then(|v| v.as_str()) {
         return Err(status_msg.to_string());

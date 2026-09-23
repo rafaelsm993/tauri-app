@@ -1,4 +1,4 @@
-use super::http::client as http;
+use super::http::{client as http, request_error};
 use serde_json::{json, Value};
 
 const ENDPOINT: &str = "https://graphql.anilist.co";
@@ -82,13 +82,10 @@ async fn graphql(query: &str, variables: Value) -> Result<Value, String> {
         .json(&body)
         .send()
         .await
-        .map_err(|e| {
-            log::error!("[anilist] ERROR: {e}");
-            e.to_string()
-        })?
+        .map_err(|e| request_error("anilist", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("anilist", e))?;
     check_graphql(&res)?;
     Ok(res)
 }

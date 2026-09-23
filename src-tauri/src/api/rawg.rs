@@ -1,4 +1,4 @@
-use super::http::client as http;
+use super::http::{client as http, request_error};
 use serde_json::{json, Value};
 
 const BASE: &str = "https://api.rawg.io/api";
@@ -39,16 +39,10 @@ pub async fn rawg_discover(page: u32, genre: Option<String>) -> Result<Value, St
         .query(&params)
         .send()
         .await
-        .map_err(|e| {
-            log::error!(
-                "[rawg] ERROR: {}",
-                crate::logging::redact(&e.to_string(), &key)
-            );
-            e.to_string()
-        })?
+        .map_err(|e| request_error("rawg", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("rawg", e))?;
 
     let total = res.get("count").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
     let results = res.get("results").cloned().unwrap_or(Value::Array(vec![]));
@@ -88,10 +82,10 @@ pub async fn rawg_search(query: &str, page: u32, genre: Option<String>) -> Resul
         .query(&params)
         .send()
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("rawg", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("rawg", e))?;
 
     let total = res.get("count").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
     let results = res.get("results").cloned().unwrap_or(Value::Array(vec![]));
@@ -114,10 +108,10 @@ pub async fn rawg_genres() -> Result<Value, String> {
         .query(&[("key", key.as_str()), ("page_size", "40")])
         .send()
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("rawg", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("rawg", e))?;
     Ok(res)
 }
 
@@ -143,10 +137,10 @@ pub async fn rawg_details(id: u32) -> Result<Value, String> {
     let (detail_res, shots_res) = tokio::join!(detail_fut, shots_fut);
 
     let mut detail = detail_res
-        .map_err(|e| e.to_string())?
+        .map_err(|e| request_error("rawg", e))?
         .json::<Value>()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| request_error("rawg", e))?;
 
     if let Some(msg) = detail.get("detail").and_then(|v| v.as_str()) {
         return Err(msg.to_string());

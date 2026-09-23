@@ -3,6 +3,7 @@ pub mod logging;
 
 #[cfg(debug_assertions)]
 use tauri::Manager;
+use tauri_plugin_log::{Target, TargetKind};
 
 /// Dev builds only: `TAURI_APP_DEVTOOLS=1 npm run tauri dev` opens the Web Inspector on start.
 /// Opt-in because a docked inspector costs viewport and CPU on every run; right-click →
@@ -10,6 +11,19 @@ use tauri::Manager;
 #[cfg(debug_assertions)]
 fn devtools_requested(value: Option<&str>) -> bool {
     value.is_some_and(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
+}
+
+/// Log targets: terminal (and logcat on Android) plus a rotating file in the
+/// platform app-log dir. Dev builds also mirror into the devtools console.
+fn log_targets() -> Vec<Target> {
+    #[allow(unused_mut)]
+    let mut targets = vec![
+        Target::new(TargetKind::Stdout),
+        Target::new(TargetKind::LogDir { file_name: None }),
+    ];
+    #[cfg(debug_assertions)]
+    targets.push(Target::new(TargetKind::Webview));
+    targets
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -20,13 +34,7 @@ pub fn run() {
                 .level(logging::level_from_env(
                     std::env::var("TAURI_APP_LOG").ok().as_deref(),
                 ))
-                .targets([
-                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
-                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
-                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
-                        file_name: None,
-                    }),
-                ])
+                .targets(log_targets())
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())

@@ -1,12 +1,16 @@
 //! Pure helpers for the debug-logging setup (A8). Kept side-effect-free and
 //! unit-tested directly; `lib.rs` wires them into the `tauri-plugin-log`
-//! builder, which is not itself unit-testable (it talks to the OS/log crate).
+//! builder, which is not itself unit-testable.
+//!
+//! Secret handling lives in `api::http::request_error`: it strips the request
+//! URL (which carries API keys) from every provider error before it is logged
+//! or returned to the UI.
 
-use tauri_plugin_log::log::LevelFilter;
+use log::LevelFilter;
 
-/// Maps the `TAURI_APP_LOG` env var to a `log::LevelFilter`.
-/// Unset, empty, or unrecognised values default to `Info` -- never silently
-/// fail loud (`Trace`) or silent (`Off`) on a typo.
+/// Maps the `TAURI_APP_LOG` env var to a `LevelFilter`.
+/// Unset, empty, or unrecognised values default to `Info`, so a typo never
+/// silently turns logging all the way up (`Trace`) or off (`Off`).
 pub fn level_from_env(value: Option<&str>) -> LevelFilter {
     match value.map(str::trim).map(str::to_ascii_lowercase).as_deref() {
         Some("trace") => LevelFilter::Trace,
@@ -17,16 +21,6 @@ pub fn level_from_env(value: Option<&str>) -> LevelFilter {
         Some("off") => LevelFilter::Off,
         _ => LevelFilter::Info,
     }
-}
-
-/// Replaces every occurrence of `secret` in `text` with `[REDACTED]`.
-/// No-ops if `secret` is empty (an empty needle would match everywhere and
-/// corrupt the string) or absent from `text`.
-pub fn redact(text: &str, secret: &str) -> String {
-    if secret.is_empty() {
-        return text.to_string();
-    }
-    text.replace(secret, "[REDACTED]")
 }
 
 #[cfg(test)]
@@ -52,19 +46,5 @@ mod tests {
         assert_eq!(level_from_env(Some("WARN")), LevelFilter::Warn);
         assert_eq!(level_from_env(Some("error")), LevelFilter::Error);
         assert_eq!(level_from_env(Some("Off")), LevelFilter::Off);
-    }
-
-    #[test]
-    fn redact_masks_the_secret_wherever_it_appears() {
-        assert_eq!(
-            redact("https://api.example.com?key=abc123&x=1", "abc123"),
-            "https://api.example.com?key=[REDACTED]&x=1"
-        );
-    }
-
-    #[test]
-    fn redact_is_a_noop_on_empty_secret_or_no_match() {
-        assert_eq!(redact("hello world", ""), "hello world");
-        assert_eq!(redact("hello world", "xyz"), "hello world");
     }
 }
