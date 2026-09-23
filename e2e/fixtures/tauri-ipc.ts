@@ -11,54 +11,53 @@ const MOVIE = (id: number) => ({
   vote_count: 1234,
   release_date: "2024-05-01",
   genre_ids: [28],
+  media_type: "movie",
 });
 
 const FIXTURES: Record<string, unknown> = {
   // Real TMDB count (19): the home page renders one lazy carousel per genre.
-  tmdb_genres_movies: {
-    genres: [
-      [28, "Action"],
-      [12, "Adventure"],
-      [16, "Animation"],
-      [35, "Comedy"],
-      [80, "Crime"],
-      [99, "Documentary"],
-      [18, "Drama"],
-      [10751, "Family"],
-      [14, "Fantasy"],
-      [36, "History"],
-      [27, "Horror"],
-      [10402, "Music"],
-      [9648, "Mystery"],
-      [10749, "Romance"],
-      [878, "Science Fiction"],
-      [10770, "TV Movie"],
-      [53, "Thriller"],
-      [10752, "War"],
-      [37, "Western"],
-    ].map(([id, name]) => ({ id, name })),
-  },
-  tmdb_discover_movies: {
+  catalog_genres: [
+    [28, "Action"],
+    [12, "Adventure"],
+    [16, "Animation"],
+    [35, "Comedy"],
+    [80, "Crime"],
+    [99, "Documentary"],
+    [18, "Drama"],
+    [10751, "Family"],
+    [14, "Fantasy"],
+    [36, "History"],
+    [27, "Horror"],
+    [10402, "Music"],
+    [9648, "Mystery"],
+    [10749, "Romance"],
+    [878, "Science Fiction"],
+    [10770, "TV Movie"],
+    [53, "Thriller"],
+    [10752, "War"],
+    [37, "Western"],
+  ].map(([id, name]) => ({ id, name })),
+  catalog_page: {
     page: 1,
     total_pages: 1,
     total_results: 12,
     results: Array.from({ length: 12 }, (_, i) => MOVIE(i + 1)),
   },
-  tmdb_movie_details: {
+  catalog_detail: {
     ...MOVIE(1),
     tagline: "Tagline",
     runtime: 128,
     genres: [{ id: 28, name: "Action" }],
-    credits: { cast: [] },
-    videos: { results: [] },
-    production_companies: [],
+    cast: [],
+    videos: [],
+    studios: [],
   },
 };
 
 export const test = base.extend({
   page: async ({ page }, use) => {
     await page.addInitScript((fixtures) => {
-      const empty = { page: 1, total_pages: 1, total_results: 0, results: [], genres: [] };
+      const empty = { page: 1, total_pages: 1, total_results: 0, results: [] };
       const calls: string[] = [];
       Object.assign(window, { __ipcCalls: calls });
       (window as any).__TAURI_INTERNALS__ = {

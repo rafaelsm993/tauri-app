@@ -130,7 +130,7 @@ test.describe("touch devices", () => {
   test("carousels load lazily: first paint does not fetch every genre", async ({ page }) => {
     const calls = () =>
       page.evaluate(() => (window as unknown as { __ipcCalls: string[] }).__ipcCalls);
-    const discover = async () => (await calls()).filter((c) => c === "tmdb_discover_movies").length;
+    const discover = async () => (await calls()).filter((c) => c === "catalog_page").length;
     const first = await discover();
     expect(first, "no carousel loaded").toBeGreaterThan(0);
     expect(first, "every carousel was fetched up front").toBeLessThan(19);

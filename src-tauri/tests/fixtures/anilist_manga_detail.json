@@ -1,0 +1,382 @@
+{
+ "data": {
+  "Media": {
+   "id": 30002,
+   "type": "MANGA",
+   "format": "MANGA",
+   "status": "RELEASING",
+   "episodes": null,
+   "chapters": null,
+   "volumes": null,
+   "duration": null,
+   "averageScore": 92,
+   "meanScore": 92,
+   "popularity": 245533,
+   "favourites": 41018,
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama",
+    "Fantasy",
+    "Horror",
+    "Psychological"
+   ],
+   "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/manga/banner/30002-3TuoSMl20fUX.jpg",
+   "coverImage": {
+    "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30002-Cul4OeN7bYtn.jpg",
+    "large": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30002-Cul4OeN7bYtn.jpg",
+    "medium": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/small/bx30002-Cul4OeN7bYtn.jpg"
+   },
+   "title": {
+    "romaji": "Berserk",
+    "english": "Berserk",
+    "native": "ベルセルク",
+    "userPreferred": "Berserk"
+   },
+   "startDate": {
+    "year": 1989,
+    "month": 8,
+    "day": 25
+   },
+   "endDate": {
+    "year": null,
+    "month": null,
+    "day": null
+   },
+   "season": null,
+   "seasonYear": null,
+   "description": "His name is Guts, the Black Swordsman, a feared warrior spoken of only in whispers. Bearer of a gigantic sword, an iron hand, and the scars of countless battles and tortures, his flesh is also indelibly marked with The Brand, an unholy symbol that draws the forces of darkness to him and dooms him as their sacrifice. But Guts won't take his fate lying down; he'll cut a crimson swath of carnage through the ranks of the damned—and anyone else foolish enough to oppose him! Accompanied by Puck the Elf, more an annoyance than a companion, Guts relentlessly follows a dark, bloodstained path that leads only to death...or vengeance.<br>\n<br>\n(Source: Dark Horse)<br>\n<br>\n<i>Notes:<br>\n- Volumes 1-5 contain the 16 prequel chapters 0A - 0P.<br>\n- <a href=\"https://anilist.co/manga/95821/\">Chapter 83</a> was omitted from Volume 13 due to the author’s request.<br>\n- Volume 14 includes “<a href=\"https://anilist.co/manga/36408/\">Berserk: The Prototype</a>”.<br>\n- Due to the author's passing, starting from Chapter 365, the manga is illustrated by Studio Gaga (Miura's assistants) and supervised by Kouji Mori (a close friend of Miura's).</i>",
+   "siteUrl": "https://anilist.co/manga/30002",
+   "studios": {
+    "nodes": []
+   },
+   "staff": {
+    "edges": [
+     {
+      "role": "Story & Art (vols 1-41)",
+      "node": {
+       "id": 96868,
+       "name": {
+        "full": "Kentarou Miura"
+       }
+      }
+     },
+     {
+      "role": "Supervisor (vols 41- )",
+      "node": {
+       "id": 101748,
+       "name": {
+        "full": "Kouji Mori"
+       }
+      }
+     },
+     {
+      "role": "Story & Art (vols 41- )",
+      "node": {
+       "id": 143994,
+       "name": {
+        "full": "Studio Gaga"
+       }
+      }
+     },
+     {
+      "role": "Translator (Spanish)",
+      "node": {
+       "id": 214718,
+       "name": {
+        "full": "Marc Bernabé"
+       }
+      }
+     },
+     {
+      "role": "Translator (Polish)",
+      "node": {
+       "id": 219478,
+       "name": {
+        "full": "Paweł Dybała"
+       }
+      }
+     },
+     {
+      "role": "Translator (Portuguese)",
+      "node": {
+       "id": 220675,
+       "name": {
+        "full": "Drik Sada"
+       }
+      }
+     }
+    ]
+   },
+   "characters": {
+    "edges": [
+     {
+      "role": "MAIN",
+      "node": {
+       "id": 422,
+       "name": {
+        "full": "Guts"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b422-XTaiTuvRohsV.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b422-XTaiTuvRohsV.png"
+       }
+      }
+     },
+     {
+      "role": "MAIN",
+      "node": {
+       "id": 423,
+       "name": {
+        "full": "Casca"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b423-AmVFCaJJOBsc.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b423-AmVFCaJJOBsc.png"
+       }
+      }
+     },
+     {
+      "role": "MAIN",
+      "node": {
+       "id": 424,
+       "name": {
+        "full": "Griffith"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b424-Jfrsf8I7zBps.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b424-Jfrsf8I7zBps.png"
+       }
+      }
+     },
+     {
+      "role": "MAIN",
+      "node": {
+       "id": 5059,
+       "name": {
+        "full": "Serpico"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b5059-wWVkoasyfJNk.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b5059-wWVkoasyfJNk.png"
+       }
+      }
+     },
+     {
+      "role": "MAIN",
+      "node": {
+       "id": 5060,
+       "name": {
+        "full": "Puck"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b5060-PWn2hc2nBy9J.jpg",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b5060-PWn2hc2nBy9J.jpg"
+       }
+      }
+     },
+     {
+      "role": "MAIN",
+      "node": {
+       "id": 7857,
+       "name": {
+        "full": "Farnese de Vandimion"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b7857-W7WpcGlw2aeH.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b7857-W7WpcGlw2aeH.png"
+       }
+      }
+     },
+     {
+      "role": "MAIN",
+      "node": {
+       "id": 7859,
+       "name": {
+        "full": "Isidro"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b7859-ThWoSQUjRlKU.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b7859-ThWoSQUjRlKU.png"
+       }
+      }
+     },
+     {
+      "role": "MAIN",
+      "node": {
+       "id": 7864,
+       "name": {
+        "full": "Schierke"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b7864-GYAwPktajKmt.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b7864-GYAwPktajKmt.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 454,
+       "name": {
+        "full": "Judeau"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b454-zAG2pjevq7OO.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b454-zAG2pjevq7OO.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 597,
+       "name": {
+        "full": "Pippin"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b597-9VvkEo8hmdxg.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b597-9VvkEo8hmdxg.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 598,
+       "name": {
+        "full": "Rickert"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b598-2r2X1nQmr3qP.jpg",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b598-2r2X1nQmr3qP.jpg"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 599,
+       "name": {
+        "full": "Corkus"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b599-bzDp9ze9vxFb.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b599-bzDp9ze9vxFb.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 600,
+       "name": {
+        "full": "Zodd"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b600-nLLiWsK0GcVI.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b600-nLLiWsK0GcVI.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 602,
+       "name": {
+        "full": "Gambino"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b602-lT45wT5DfIPe.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b602-lT45wT5DfIPe.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 604,
+       "name": {
+        "full": "Void"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b604-vQdHCxkTarh5.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b604-vQdHCxkTarh5.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 605,
+       "name": {
+        "full": "Slan"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b605-ZsoC0t5dH12S.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b605-ZsoC0t5dH12S.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 607,
+       "name": {
+        "full": "Ubik"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b607-ile9k9zakwS1.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b607-ile9k9zakwS1.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 608,
+       "name": {
+        "full": "Conrad"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b608-k3fNvJuP7zA3.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b608-k3fNvJuP7zA3.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 611,
+       "name": {
+        "full": "Gaston"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b611-hNgBbImHqXaO.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b611-hNgBbImHqXaO.png"
+       }
+      }
+     },
+     {
+      "role": "SUPPORTING",
+      "node": {
+       "id": 614,
+       "name": {
+        "full": "Charlotte Beatrix Marie Rhody Windam"
+       },
+       "image": {
+        "large": "https://s4.anilist.co/file/anilistcdn/character/large/b614-v4k6ZCzdtIBv.png",
+        "medium": "https://s4.anilist.co/file/anilistcdn/character/medium/b614-v4k6ZCzdtIBv.png"
+       }
+      }
+     }
+    ]
+   },
+   "trailer": {
+    "id": "uam9bo293-w",
+    "site": "youtube",
+    "thumbnail": "https://i.ytimg.com/vi/uam9bo293-w/hqdefault.jpg"
+   }
+  }
+ }
+}

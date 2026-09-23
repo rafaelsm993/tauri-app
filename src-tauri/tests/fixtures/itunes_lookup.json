@@ -1,0 +1,47 @@
+{
+ "resultCount": 1,
+ "results": [
+  {
+   "formattedPrice": "Free",
+   "artistIds": [
+    320848015
+   ],
+   "genres": [
+    "Fantasy",
+    "Books",
+    "Sci-Fi & Fantasy",
+    "Romance",
+    "Paranormal Romance",
+    "Epic Fantasy",
+    "Fiction & Literature",
+    "Fairy Tales, Myths & Fables"
+   ],
+   "trackId": 1558164688,
+   "trackName": "Golden Curse: A Free Fantasy Romance",
+   "genreIds": [
+    "10044",
+    "38",
+    "9020",
+    "9003",
+    "10058",
+    "11002",
+    "9031",
+    "11049"
+   ],
+   "kind": "ebook",
+   "currency": "USD",
+   "description": "<b><i>An addicting, exciting, and twisty FREE read, see why fans of Sarah J. Maas and Jennifer L. Armentrout love this series.</i></b><br /><br /><b>A warrior with nothing left to lose.&#xa0;A prince trying to hold his kingdom together.&#xa0;</b><br /><br /><b>As a child, Etta ran from the palace for her life. Now, she must find a way back in.&#xa0;</b><br /><br />The kingdom of Gaule is a dangerous place for those with magic. To be found is a death sentence, forcing magic wielders into the forests to hide from the crown.<br /><br />Etta Basile has spent years among the trees, training for the day she'll take up the curse of her ancestors, a curse tying her life to that of her greatest enemy, the Prince of Gaule.<br /><br />Prince Alexandre was once a childhood friend, but now, Etta must keep her identity a secret as she enters a tournament to become his champion.&#xa0;<br /><br />Her goals are simple.&#xa0;<br /><br />Protect the prince. Break the curse. Kill the prince.&#xa0;<br /><br />What her training never prepared her for? Falling in love.&#xa0;<br /><br />But love is for the weak, and Etta can't forget the reason she's there.&#xa0;<br /><br />Her people are counting on her.<br /><br /><b><i>Get lost in an epic fantasy where romance crosses enemy lines and nothing is ever black and white. Golden Curse is the first book in the completed seven-book Fantasy and Fairytales series. Are you ready? Scroll up to click and see why readers love Etta and Alex.&#xa0;</i></b>",
+   "trackCensoredName": "Golden Curse: A Free Fantasy Romance",
+   "artistViewUrl": "https://books.apple.com/us/artist/m-lynn/320848015?uo=4",
+   "trackViewUrl": "https://books.apple.com/us/book/golden-curse-a-free-fantasy-romance/id1558164688?uo=4",
+   "artworkUrl60": "https://is1-ssl.mzstatic.com/image/thumb/Publication124/v4/51/eb/99/51eb991e-123e-6372-8e52-de86b7363706/0000683308.jpg/60x60bb.jpg",
+   "artworkUrl100": "https://is1-ssl.mzstatic.com/image/thumb/Publication124/v4/51/eb/99/51eb991e-123e-6372-8e52-de86b7363706/0000683308.jpg/100x100bb.jpg",
+   "price": 0.0,
+   "releaseDate": "2018-10-02T07:00:00Z",
+   "artistId": 320848015,
+   "artistName": "M. Lynn",
+   "averageUserRating": 4.0,
+   "userRatingCount": 1068
+  }
+ ]
+}

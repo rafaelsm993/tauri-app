@@ -7,12 +7,14 @@ RAWG (games), iTunes (books). No database, no user state.
 ## Map
 | What | Where |
 |---|---|
-| Rust commands (one module per provider) | `src-tauri/src/api/<provider>.rs` |
+| IPC facade (the only commands: `catalog_genres/page/detail`) | `src-tauri/src/api/catalog.rs` |
+| Providers (`impl Provider`: raw serde structs → pure `map_*`) | `src-tauri/src/api/<provider>.rs` |
+| Shared DTOs | `src-tauri/src/api/types.rs` |
 | Shared HTTP client | `src-tauri/src/api/http.rs` (`use super::http::client as http;`) |
 | Command registration | `src-tauri/src/lib.rs` → `generate_handler![]` |
 | Permissions / capabilities | `src-tauri/capabilities/*.json` |
-| IPC service per provider | `src/lib/api/<provider>.ts` (`invoke` → map to shared types) |
-| Shared types | `src/lib/types/media.ts` (`MediaItem`, `MediaDetail`, `PaginatedResult`) |
+| IPC client | `src/lib/api/catalog.ts` (3 typed `invoke`s, no mapping) |
+| Shared types (mirror of `types.rs`, guarded by `media.contract.test.ts`) | `src/lib/types/media.ts` |
 | Components | `src/lib/components/{media,ui}/*.svelte` |
 | Stores | `src/lib/stores/*.svelte.ts` (class + `$state`, singleton) |
 | Styles | `src/lib/styles/` — SCSS vars/mixins auto-injected; never `@use`/`@import` in components |
@@ -82,4 +84,5 @@ Supported range: **360 px phone → 1920 px+ desktop**, mouse **and** touch. The
 - Mobile builds (`tauri android|ios`) aren't initialised yet. Keep Rust free of desktop-only APIs outside `#[cfg(desktop)]` so enabling them later is config, not a rewrite.
 
 ## Adding a provider (checklist)
-Rust module + pure-helper tests → `api/mod.rs` → `lib.rs` handler → `src/lib/api/<p>.ts` + `mockIPC` test → types in `media.ts` if needed → `+page.svelte` switch cases → `npm run verify`.
+Save real responses to `src-tauri/tests/fixtures/` (strip keys/URLs) → module with `Raw*` structs + pure `map_*` fns tested on them → `impl Provider` → arms in the 3 `catalog.rs` matches → `mod.rs` → e2e fixture if the home tab changes → `cargo test live_ -- --ignored` → `npm run verify`.
+Changing a DTO: edit `types.rs`, run `UPDATE_CONTRACT=1 cargo test contract`, mirror `media.ts` until `media.contract.test.ts` is green.

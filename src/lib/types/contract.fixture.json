@@ -1,0 +1,91 @@
+{
+  "detail": {
+    "author": "Author",
+    "backdrop_path": "https://example.com/b.jpg",
+    "cast": [
+      {
+        "character": "Role",
+        "id": 1,
+        "name": "Name",
+        "profile_path": null
+      }
+    ],
+    "chapters": 100,
+    "developer": "Developer",
+    "episodes": 12,
+    "genres": [
+      {
+        "id": 28,
+        "name": "Action"
+      }
+    ],
+    "id": "x1",
+    "media_type": "book",
+    "overview": "Overview",
+    "platforms": ["PC"],
+    "poster_path": "https://example.com/p.jpg",
+    "publisher": "Publisher",
+    "release_date": "2024-01-01",
+    "runtime": 120,
+    "screenshots": ["https://example.com/s.jpg"],
+    "status": "Released",
+    "studios": ["Studio"],
+    "subjects": ["Fiction"],
+    "tagline": "Tagline",
+    "title": "Title",
+    "videos": [
+      {
+        "key": "abc",
+        "name": "Trailer",
+        "site": "YouTube",
+        "type": "Trailer"
+      }
+    ],
+    "volumes": 10,
+    "vote_average": 7.5,
+    "vote_count": 10
+  },
+  "genre": {
+    "id": "action",
+    "name": "Action"
+  },
+  "item": {
+    "author": "Author",
+    "backdrop_path": "https://example.com/b.jpg",
+    "chapters": 100,
+    "episodes": 12,
+    "first_air_date": "2024-01-01",
+    "genre_ids": [28],
+    "id": 1,
+    "media_type": "movie",
+    "overview": "Overview",
+    "poster_path": "https://example.com/p.jpg",
+    "release_date": "2024-01-01",
+    "title": "Title",
+    "vote_average": 7.5,
+    "vote_count": 10
+  },
+  "page": {
+    "page": 1,
+    "results": [
+      {
+        "author": "Author",
+        "backdrop_path": "https://example.com/b.jpg",
+        "chapters": 100,
+        "episodes": 12,
+        "first_air_date": "2024-01-01",
+        "genre_ids": [28],
+        "id": 1,
+        "media_type": "movie",
+        "overview": "Overview",
+        "poster_path": "https://example.com/p.jpg",
+        "release_date": "2024-01-01",
+        "title": "Title",
+        "vote_average": 7.5,
+        "vote_count": 10
+      }
+    ],
+    "total_pages": 2,
+    "total_results": 30
+  }
+}

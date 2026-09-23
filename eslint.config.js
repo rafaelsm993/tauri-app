@@ -26,9 +26,12 @@ export default ts.config(
     rules: {
       // TypeScript already reports undefined identifiers, and better.
       "no-undef": "off",
-      // Raw provider JSON is typed `any` today; tracked in backlog, not a gate.
       "@typescript-eslint/no-explicit-any": "warn",
     },
+  },
+  {
+    files: ["src/lib/api/**", "src/lib/types/**"],
+    rules: { "@typescript-eslint/no-explicit-any": "error" },
   },
   {
     files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],

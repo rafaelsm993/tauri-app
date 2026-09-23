@@ -1,0 +1,462 @@
+{
+ "adult": false,
+ "backdrop_path": "/c6OLXfKAk5BKeR6broC8pYiCquX.jpg",
+ "belongs_to_collection": null,
+ "budget": 63000000,
+ "genres": [
+  {
+   "id": 18,
+   "name": "Drama"
+  },
+  {
+   "id": 53,
+   "name": "Thriller"
+  }
+ ],
+ "homepage": "https://www.20thcenturystudios.com/movies/fight-club",
+ "id": 550,
+ "imdb_id": "tt0137523",
+ "origin_country": [
+  "US"
+ ],
+ "original_language": "en",
+ "original_title": "Fight Club",
+ "overview": "A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy. Their concept catches on, with underground \"fight clubs\" forming in every town, until an eccentric gets in the way and ignites an out-of-control spiral toward oblivion.",
+ "popularity": 47.1488,
+ "poster_path": "/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg",
+ "production_companies": [
+  {
+   "id": 711,
+   "logo_path": "/tEiIH5QesdheJmDAqQwvtN60727.png",
+   "name": "Fox 2000 Pictures",
+   "origin_country": "US"
+  },
+  {
+   "id": 508,
+   "logo_path": "/4sGWXoboEkWPphI6es6rTmqkCBh.png",
+   "name": "Regency Enterprises",
+   "origin_country": "US"
+  },
+  {
+   "id": 4700,
+   "logo_path": "/A32wmjrs9Psf4zw0uaixF0GXfxq.png",
+   "name": "Linson Entertainment",
+   "origin_country": "US"
+  },
+  {
+   "id": 25,
+   "logo_path": "/nM2MfoMqzJQRiSynsDabOtFKetD.png",
+   "name": "20th Century Fox",
+   "origin_country": "US"
+  },
+  {
+   "id": 20555,
+   "logo_path": "/hD8yEGUBlHOcfHYbujp71vD8gZp.png",
+   "name": "Taurus Film",
+   "origin_country": "DE"
+  }
+ ],
+ "production_countries": [
+  {
+   "iso_3166_1": "DE",
+   "name": "Germany"
+  },
+  {
+   "iso_3166_1": "US",
+   "name": "United States of America"
+  }
+ ],
+ "release_date": "1999-10-15",
+ "revenue": 100853753,
+ "runtime": 139,
+ "softcore": false,
+ "spoken_languages": [
+  {
+   "english_name": "English",
+   "iso_639_1": "en",
+   "name": "English"
+  }
+ ],
+ "status": "Released",
+ "tagline": "Mischief. Mayhem. Soap.",
+ "title": "Fight Club",
+ "video": false,
+ "vote_average": 8.437,
+ "vote_count": 32901,
+ "credits": {
+  "cast": [
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 819,
+    "known_for_department": "Acting",
+    "name": "Edward Norton",
+    "original_name": "Edward Norton",
+    "popularity": 6.6552,
+    "profile_path": "/8nytsqL59SFJTVYVrN72k6qkGgJ.jpg",
+    "cast_id": 4,
+    "character": "Narrator",
+    "credit_id": "52fe4250c3a36847f80149f3",
+    "order": 0
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 287,
+    "known_for_department": "Acting",
+    "name": "Brad Pitt",
+    "original_name": "Brad Pitt",
+    "popularity": 13.4247,
+    "profile_path": "/ajNaPmXVVMJFg9GWmu6MJzTaXdV.jpg",
+    "cast_id": 5,
+    "character": "Tyler Durden",
+    "credit_id": "52fe4250c3a36847f80149f7",
+    "order": 1
+   },
+   {
+    "adult": false,
+    "gender": 1,
+    "id": 1283,
+    "known_for_department": "Acting",
+    "name": "Helena Bonham Carter",
+    "original_name": "Helena Bonham Carter",
+    "popularity": 4.9533,
+    "profile_path": "/hJMbNSPJ2PCahsP3rNEU39C8GWU.jpg",
+    "cast_id": 285,
+    "character": "Marla Singer",
+    "credit_id": "631f0de8bd32090082733691",
+    "order": 2
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 7470,
+    "known_for_department": "Acting",
+    "name": "Meat Loaf",
+    "original_name": "Meat Loaf",
+    "popularity": 1.6944,
+    "profile_path": "/1zkohpaG3my4qQAZGVgzgPuXwZ6.jpg",
+    "cast_id": 7,
+    "character": "Robert Paulson",
+    "credit_id": "52fe4250c3a36847f80149ff",
+    "order": 3
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 7499,
+    "known_for_department": "Acting",
+    "name": "Jared Leto",
+    "original_name": "Jared Leto",
+    "popularity": 4.2112,
+    "profile_path": "/ca3x0OfIKbJppZh8S1Alx3GfUZO.jpg",
+    "cast_id": 286,
+    "character": "Angel Face",
+    "credit_id": "631f0e29ce9e91007f757d86",
+    "order": 4
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 7471,
+    "known_for_department": "Acting",
+    "name": "Zach Grenier",
+    "original_name": "Zach Grenier",
+    "popularity": 2.2894,
+    "profile_path": "/fSyQKZO39sUsqY283GXiScOg3Hi.jpg",
+    "cast_id": 31,
+    "character": "Richard Chesler (Regional Manager)",
+    "credit_id": "52fe4250c3a36847f8014a55",
+    "order": 5
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 7497,
+    "known_for_department": "Acting",
+    "name": "Holt McCallany",
+    "original_name": "Holt McCallany",
+    "popularity": 3.1569,
+    "profile_path": "/xHnvYcJv6YEku9pIg8LoDNHWQy.jpg",
+    "cast_id": 32,
+    "character": "The Mechanic",
+    "credit_id": "52fe4250c3a36847f8014a59",
+    "order": 6
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 7498,
+    "known_for_department": "Acting",
+    "name": "Eion Bailey",
+    "original_name": "Eion Bailey",
+    "popularity": 4.7847,
+    "profile_path": "/3DW13W47cKk4LQZwS4EvRaNBoVu.jpg",
+    "cast_id": 33,
+    "character": "Ricky",
+    "credit_id": "52fe4250c3a36847f8014a5d",
+    "order": 7
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 7472,
+    "known_for_department": "Acting",
+    "name": "Richmond Arquette",
+    "original_name": "Richmond Arquette",
+    "popularity": 1.6168,
+    "profile_path": "/7byGiVac0GjBSVD1h6ylZlVXZK6.jpg",
+    "cast_id": 34,
+    "character": "Intern at Hospital",
+    "credit_id": "52fe4250c3a36847f8014a61",
+    "order": 8
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 7219,
+    "known_for_department": "Acting",
+    "name": "David Andrews",
+    "original_name": "David Andrews",
+    "popularity": 1.8786,
+    "profile_path": "/s5jEvhtGrYptw3Mmv7bejvcAKLv.jpg",
+    "cast_id": 35,
+    "character": "Thomas at Remaining Men Together",
+    "credit_id": "52fe4250c3a36847f8014a65",
+    "order": 9
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 1129738,
+    "known_for_department": "Acting",
+    "name": "George Maguire",
+    "original_name": "George Maguire",
+    "popularity": 0.6231,
+    "profile_path": "/pyKzJNkpjCA96ItVq93x1Y2YfYx.jpg",
+    "cast_id": 59,
+    "character": "Group Leader at Remaining Men Together",
+    "credit_id": "581fce4c92514168ad00899d",
+    "order": 10
+   },
+   {
+    "adult": false,
+    "gender": 1,
+    "id": 1317693,
+    "known_for_department": "Acting",
+    "name": "Eugenie Bondurant",
+    "original_name": "Eugenie Bondurant",
+    "popularity": 0.7669,
+    "profile_path": "/9ULAELEKNha7VCJhRWoer58NcJe.jpg",
+    "cast_id": 60,
+    "character": "Weeping Woman - Onward and Upward",
+    "credit_id": "581fce7fc3a368555600847b",
+    "order": 11
+   },
+   {
+    "adult": false,
+    "gender": 1,
+    "id": 68277,
+    "known_for_department": "Acting",
+    "name": "Christina Cabot",
+    "original_name": "Christina Cabot",
+    "popularity": 0.7784,
+    "profile_path": "/h1vwbOfITSvDvDq8E9MVvWqMYSr.jpg",
+    "cast_id": 36,
+    "character": "Group Leader - Partners in Positivity",
+    "credit_id": "52fe4250c3a36847f8014a69",
+    "order": 12
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 202080,
+    "known_for_department": "Acting",
+    "name": "Sydney 'Big Dawg' Colston",
+    "original_name": "Sydney 'Big Dawg' Colston",
+    "popularity": 0.7861,
+    "profile_path": "/tdzVh7pstj6rcppqbBOX0KA7mX9.jpg",
+    "cast_id": 61,
+    "character": "Speaker - Free and Clear",
+    "credit_id": "581fcf3a92514168ad008b09",
+    "order": 13
+   },
+   {
+    "adult": false,
+    "gender": 1,
+    "id": 7473,
+    "known_for_department": "Acting",
+    "name": "Rachel Singer",
+    "original_name": "Rachel Singer",
+    "popularity": 1.2029,
+    "profile_path": "/o4Hzvy1VRa3IILMrI45Ia08pstK.jpg",
+    "cast_id": 62,
+    "character": "Chloe",
+    "credit_id": "581fcf5d92514168aa008b9e",
+    "order": 14
+   },
+   {
+    "adult": false,
+    "gender": 1,
+    "id": 1172435,
+    "known_for_department": "Acting",
+    "name": "Christie Cronenweth",
+    "original_name": "Christie Cronenweth",
+    "popularity": 0.3641,
+    "profile_path": "/m9S13jmuBO2VeY0ZspSS7DlAEU.jpg",
+    "cast_id": 63,
+    "character": "Airline Check-In Attendant",
+    "credit_id": "581fd16ec3a36855530096a4",
+    "order": 15
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 956719,
+    "known_for_department": "Acting",
+    "name": "Tim DeZarn",
+    "original_name": "Tim DeZarn",
+    "popularity": 1.2159,
+    "profile_path": "/tduRqomAU3LARfuDa2OMKFAd1rR.jpg",
+    "cast_id": 37,
+    "character": "Federated Motor Co. - Inspector Bird",
+    "credit_id": "52fe4250c3a36847f8014a6d",
+    "order": 16
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 59285,
+    "known_for_department": "Acting",
+    "name": "Ezra Buzzington",
+    "original_name": "Ezra Buzzington",
+    "popularity": 0.966,
+    "profile_path": "/vnkdumEom4lVAqdh7Odsf2nZpjB.jpg",
+    "cast_id": 38,
+    "character": "Federated Motor Co. - Inspector Dent",
+    "credit_id": "52fe4250c3a36847f8014a71",
+    "order": 17
+   },
+   {
+    "adult": false,
+    "gender": 1,
+    "id": 1705289,
+    "known_for_department": "Acting",
+    "name": "Dierdre Downing-Jackson",
+    "original_name": "Dierdre Downing-Jackson",
+    "popularity": 0.3568,
+    "profile_path": "/81NKNmWmruKfvN6ZTAJmUVgz2yR.jpg",
+    "cast_id": 64,
+    "character": "Business Woman on Plane",
+    "credit_id": "581fd575c3a36855630075c4",
+    "order": 18
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 17449,
+    "known_for_department": "Acting",
+    "name": "Bob Stephenson",
+    "original_name": "Bob Stephenson",
+    "popularity": 0.9984,
+    "profile_path": "/6RICLz0vofoGkI339Pk5sVn1657.jpg",
+    "cast_id": 39,
+    "character": "Airport Security Officer",
+    "credit_id": "52fe4250c3a36847f8014a75",
+    "order": 19
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 62846,
+    "known_for_department": "Acting",
+    "name": "Charlie Dell",
+    "original_name": "Charlie Dell",
+    "popularity": 0.9749,
+    "profile_path": null,
+    "cast_id": 65,
+    "character": "Doorman at Person Towers",
+    "credit_id": "581fd6bcc3a3685556008e6b",
+    "order": 20
+   },
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 530040,
+    "known_for_department": "Acting",
+    "name": "Rob Lanza",
+    "original_name": "Rob Lanza",
+    "popularity": 0.6823,
+    "profile_path": "/4qhdB9O9G5xm4K0KVxcXTOK35en.jpg",
+    "cast_id": 66,
+    "character": "Man in Suit",
+    "credit_id": "581fd6e192514168ad0093bc",
+    "order": 21
+   }
+  ]
+ },
+ "videos": {
+  "results": [
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Yeah... no wonder this movie never won an Oscar",
+    "key": "V0Fqdb-smqo",
+    "site": "YouTube",
+    "size": 2160,
+    "type": "Featurette",
+    "official": false,
+    "id": "67c90f7a3dd7da394f24957b",
+    "published_at": "2025-02-14T14:25:16.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "20th Anniversary Trailer",
+    "key": "dfeUzm6KF4g",
+    "site": "YouTube",
+    "size": 1080,
+    "type": "Trailer",
+    "official": true,
+    "id": "64fb16fbdb4ed610343d72c3",
+    "published_at": "2019-10-15T18:59:47.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Mark Kermode introduces Fight Club | Film4 Interview",
+    "key": "tiWCNtGDGEY",
+    "site": "YouTube",
+    "size": 480,
+    "type": "Featurette",
+    "official": true,
+    "id": "65d00d0c57176f017b8fc73d",
+    "published_at": "2015-05-08T15:59:05.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "Theatrical Trailer (HD Fan Remaster)",
+    "key": "6JnN1DmbqoU",
+    "site": "YouTube",
+    "size": 1080,
+    "type": "Trailer",
+    "official": false,
+    "id": "653b36ba5907de00c4953699",
+    "published_at": "2015-02-26T03:19:25.000Z"
+   },
+   {
+    "iso_639_1": "en",
+    "iso_3166_1": "US",
+    "name": "#TBT Trailer",
+    "key": "BdJKm16Co6M",
+    "site": "YouTube",
+    "size": 1080,
+    "type": "Trailer",
+    "official": true,
+    "id": "5c9294240e0a267cd516835f",
+    "published_at": "2014-10-02T19:20:22.000Z"
+   }
+  ]
+ }
+}

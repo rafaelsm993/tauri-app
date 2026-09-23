@@ -1,0 +1,187 @@
+{
+ "count": 19,
+ "next": null,
+ "previous": null,
+ "results": [
+  {
+   "id": 4,
+   "name": "Action",
+   "slug": "action",
+   "games_count": 192234,
+   "image_background": "https://media.rawg.io/media/games/b8c/b8c243eaa0fbac8115e0cdccac3f91dc.jpg",
+   "games": [
+    {
+     "id": 3498,
+     "slug": "grand-theft-auto-v",
+     "name": "Grand Theft Auto V",
+     "added": 22729
+    },
+    {
+     "id": 3328,
+     "slug": "the-witcher-3-wild-hunt",
+     "name": "The Witcher 3: Wild Hunt",
+     "added": 22363
+    },
+    {
+     "id": 13536,
+     "slug": "portal",
+     "name": "Portal",
+     "added": 17883
+    },
+    {
+     "id": 5286,
+     "slug": "tomb-raider",
+     "name": "Tomb Raider",
+     "added": 17881
+    },
+    {
+     "id": 12020,
+     "slug": "left-4-dead-2",
+     "name": "Left 4 Dead 2",
+     "added": 17546
+    },
+    {
+     "id": 28,
+     "slug": "red-dead-redemption-2",
+     "name": "Red Dead Redemption 2",
+     "added": 17044
+    }
+   ]
+  },
+  {
+   "id": 51,
+   "name": "Indie",
+   "slug": "indie",
+   "games_count": 87609,
+   "image_background": "https://media.rawg.io/media/games/4cf/4cfc6b7f1850590a4634b08bfab308ab.jpg",
+   "games": [
+    {
+     "id": 1030,
+     "slug": "limbo",
+     "name": "Limbo",
+     "added": 14181
+    },
+    {
+     "id": 422,
+     "slug": "terraria",
+     "name": "Terraria",
+     "added": 13562
+    },
+    {
+     "id": 3272,
+     "slug": "rocket-league",
+     "name": "Rocket League",
+     "added": 12874
+    },
+    {
+     "id": 9767,
+     "slug": "hollow-knight",
+     "name": "Hollow Knight",
+     "added": 11956
+    },
+    {
+     "id": 654,
+     "slug": "stardew-valley",
+     "name": "Stardew Valley",
+     "added": 11098
+    },
+    {
+     "id": 3612,
+     "slug": "hotline-miami",
+     "name": "Hotline Miami",
+     "added": 10947
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "Adventure",
+   "slug": "adventure",
+   "games_count": 152533,
+   "image_background": "https://media.rawg.io/media/games/0af/0af85e8edddfa55368e47c539914a220.jpg",
+   "games": [
+    {
+     "id": 3439,
+     "slug": "life-is-strange-episode-1-2",
+     "name": "Life is Strange",
+     "added": 15955
+    },
+    {
+     "id": 1030,
+     "slug": "limbo",
+     "name": "Limbo",
+     "added": 14181
+    },
+    {
+     "id": 4459,
+     "slug": "grand-theft-auto-iv",
+     "name": "Grand Theft Auto IV",
+     "added": 13263
+    },
+    {
+     "id": 41,
+     "slug": "little-nightmares",
+     "name": "Little Nightmares",
+     "added": 11710
+    },
+    {
+     "id": 23027,
+     "slug": "the-walking-dead",
+     "name": "The Walking Dead: Season 1",
+     "added": 11710
+    },
+    {
+     "id": 19487,
+     "slug": "alan-wake",
+     "name": "Alan Wake",
+     "added": 10537
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "name": "RPG",
+   "slug": "role-playing-games-rpg",
+   "games_count": 62261,
+   "image_background": "https://media.rawg.io/media/games/49c/49c3dfa4ce2f6f140cc4825868e858cb.jpg",
+   "games": [
+    {
+     "id": 3328,
+     "slug": "the-witcher-3-wild-hunt",
+     "name": "The Witcher 3: Wild Hunt",
+     "added": 22363
+    },
+    {
+     "id": 5679,
+     "slug": "the-elder-scrolls-v-skyrim",
+     "name": "The Elder Scrolls V: Skyrim",
+     "added": 16964
+    },
+    {
+     "id": 802,
+     "slug": "borderlands-2",
+     "name": "Borderlands 2",
+     "added": 16059
+    },
+    {
+     "id": 3070,
+     "slug": "fallout-4",
+     "name": "Fallout 4",
+     "added": 14351
+    },
+    {
+     "id": 41494,
+     "slug": "cyberpunk-2077",
+     "name": "Cyberpunk 2077",
+     "added": 14075
+    },
+    {
+     "id": 766,
+     "slug": "warframe",
+     "name": "Warframe",
+     "added": 13174
+    }
+   ]
+  }
+ ]
+}

@@ -1,5 +1,6 @@
 //! Shared `reqwest::Client` (keeps the connection pool and TLS cache) and request path.
 use reqwest::{Client, RequestBuilder};
+use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::sync::LazyLock;
 use std::time::Instant;
@@ -62,6 +63,23 @@ pub async fn fetch_json(provider: &str, op: &str, req: RequestBuilder) -> Result
         describe_count(result_count(&body))
     );
     Ok(body)
+}
+
+/// Reads a provider body into its typed raw struct.
+pub fn decode<T: DeserializeOwned>(provider: &str, body: Value) -> Result<T, String> {
+    serde_json::from_value(body).map_err(|e| {
+        let msg = format!("{provider}: unexpected response ({e})");
+        log::error!("[{provider}] {msg}");
+        msg
+    })
+}
+
+pub async fn fetch<T: DeserializeOwned>(
+    provider: &str,
+    op: &str,
+    req: RequestBuilder,
+) -> Result<T, String> {
+    decode(provider, fetch_json(provider, op, req).await?)
 }
 
 /// TMDB/RAWG/iTunes list under `results`; AniList under `data.Page.media`.
@@ -189,6 +207,13 @@ mod tests {
             Some(3)
         );
         assert_eq!(result_count(&json!({"id": 7, "title": "x"})), None);
+    }
+
+    #[test]
+    fn decode_reports_shape_errors_with_the_provider_name() {
+        let err = decode::<Vec<u32>>("tmdb", json!({"a": 1})).unwrap_err();
+        assert!(err.starts_with("tmdb: unexpected response"), "got: {err}");
+        assert_eq!(decode::<Vec<u32>>("x", json!([1, 2])).unwrap(), vec![1, 2]);
     }
 
     #[test]

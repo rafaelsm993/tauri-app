@@ -23,11 +23,10 @@ export interface MediaItem {
   author?: string;
   episodes?: number | null;
   chapters?: number | null;
-  developer?: string;
 }
 
 export interface Genre {
-  id: number;
+  id: GenreId;
   name: string;
 }
 export interface CastMember {
@@ -71,23 +70,7 @@ export interface MediaDetail {
   screenshots?: string[];
 }
 
-const TMDB_BASE = "https://image.tmdb.org/t/p";
-
-export const TMDB_IMG = {
-  poster: (path: string | null, size: "w185" | "w342" | "w500" = "w342") =>
-    path ? `${TMDB_BASE}/${size}${path}` : null,
-  backdrop: (path: string | null, size: "w780" | "w1280" = "w780") =>
-    path ? `${TMDB_BASE}/${size}${path}` : null,
-  profile: (path: string | null, size: "w185" | "w342" = "w185") =>
-    path ? `${TMDB_BASE}/${size}${path}` : null,
-} as const;
-
-export const OL_IMG = {
-  cover: (coverId: number | null, size: "S" | "M" | "L" = "M") =>
-    coverId ? `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg` : null,
-} as const;
-
-// Providers store absolute URLs; TMDB_IMG only serves legacy relative paths.
+// Providers return absolute URLs.
 export function getPosterUrl(item: MediaItem): string | null {
   return item.poster_path ?? null;
 }
@@ -109,7 +92,6 @@ export const MEDIA_LABELS: Record<MediaType, string> = {
   game: "Game",
 };
 
-// Books use a curated list because iTunes has no genre-list endpoint.
 export const GENRE_SUPPORTED: ReadonlySet<MediaType> = new Set<MediaType>([
   "movie",
   "tv",
