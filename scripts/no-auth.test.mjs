@@ -43,13 +43,17 @@ test("deleted files are gone", () => {
   }
 });
 
-test("only home and detail routes remain", () => {
+test("routes are the known allow-list", () => {
   const routes = walk("src/routes").sort();
   assert.deepEqual(routes, [
     "src/routes/+layout.svelte",
     "src/routes/+layout.ts",
     "src/routes/+page.svelte",
+    "src/routes/library/+page.svelte",
     "src/routes/media/[type]/[id]/+page.svelte",
+    "src/routes/planner/+page.svelte",
+    "src/routes/profile/+page.svelte",
+    "src/routes/welcome/+page.svelte",
   ]);
 });
 
@@ -83,9 +87,15 @@ test("rusqlite dependency is removed", () => {
   assert.ok(!read("src-tauri/Cargo.toml").includes("rusqlite"));
 });
 
-test("api module registry lists only providers", () => {
+test("api module registry lists only providers (plus the shared http client)", () => {
   const mod = read("src-tauri/src/api/mod.rs").trim().split("\n").sort();
-  assert.deepEqual(mod, ["pub mod anilist;", "pub mod itunes;", "pub mod rawg;", "pub mod tmdb;"]);
+  assert.deepEqual(mod, [
+    "pub mod anilist;",
+    "pub mod http;",
+    "pub mod itunes;",
+    "pub mod rawg;",
+    "pub mod tmdb;",
+  ]);
 });
 
 test("User and WatchlistStatus types are gone from media.ts", () => {

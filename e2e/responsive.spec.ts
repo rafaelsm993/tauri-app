@@ -3,6 +3,10 @@ import { expect, test } from "./fixtures/tauri-ipc";
 const SCREENS = [
   { name: "home", path: "/" },
   { name: "detail", path: "/media/movie/1" },
+  { name: "library", path: "/library" },
+  { name: "profile", path: "/profile" },
+  { name: "planner", path: "/planner" },
+  { name: "welcome", path: "/welcome" },
 ];
 
 for (const screen of SCREENS) {
