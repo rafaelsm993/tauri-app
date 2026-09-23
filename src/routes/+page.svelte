@@ -2,17 +2,9 @@
   import { onMount, onDestroy } from "svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { TmdbAPI } from "$lib/api/tmdb";
-  import { AnilistAPI } from "$lib/api/anilist";
-  import { ITunesAPI } from "$lib/api/itunes";
-  import { RawgAPI } from "$lib/api/rawg";
-  import type {
-    MediaItem,
-    MediaType,
-    PaginatedResult,
-    GenreOption,
-    GenreId,
-  } from "$lib/types/media";
+  import { catalog } from "$lib/api/catalog";
+  import { errorMessage } from "$lib/utils/errors";
+  import type { MediaItem, MediaType, GenreOption, GenreId } from "$lib/types/media";
   import { GENRE_SUPPORTED } from "$lib/types/media";
   import MediaCard from "$lib/components/media/MediaCard.svelte";
   import SearchBar from "$lib/components/ui/SearchBar.svelte";
@@ -64,26 +56,6 @@
   let sentinel = $state<HTMLDivElement | undefined>(undefined);
   let observer: IntersectionObserver;
 
-  // Each provider exposes genres differently — centralised here.
-  async function loadGenresFor(cat: MediaType): Promise<GenreOption[]> {
-    switch (cat) {
-      case "movie":
-        return TmdbAPI.movieGenres();
-      case "tv":
-        return TmdbAPI.tvGenres();
-      case "anime":
-        return AnilistAPI.animeGenres();
-      case "manga":
-        return AnilistAPI.mangaGenres();
-      case "book":
-        return ITunesAPI.genres();
-      case "game":
-        return RawgAPI.genres();
-      default:
-        return [];
-    }
-  }
-
   async function refreshGenres(cat: MediaType): Promise<GenreOption[]> {
     if (!GENRE_SUPPORTED.has(cat)) {
       genres = [];
@@ -95,7 +67,7 @@
     }
     genresLoading = true;
     try {
-      const list = await loadGenresFor(cat);
+      const list = await catalog.fetchGenres(cat);
       genreCache[cat] = list;
       genres = list;
       return list;
@@ -104,42 +76,6 @@
       return [];
     } finally {
       genresLoading = false;
-    }
-  }
-
-  async function fetchPage(
-    cat: MediaType,
-    q: string,
-    p: number,
-    g: GenreId | null,
-  ): Promise<PaginatedResult<MediaItem>> {
-    switch (cat) {
-      case "movie": {
-        const gid = typeof g === "number" ? g : undefined;
-        return q.trim() ? TmdbAPI.searchMovies(q, p) : TmdbAPI.discoverMovies(p, gid);
-      }
-      case "tv": {
-        const gid = typeof g === "number" ? g : undefined;
-        return q.trim() ? TmdbAPI.searchTv(q, p) : TmdbAPI.discoverTv(p, gid);
-      }
-      case "anime": {
-        const slug = typeof g === "string" ? g : undefined;
-        return AnilistAPI.searchAnime(q.trim() || "", p, slug);
-      }
-      case "manga": {
-        const slug = typeof g === "string" ? g : undefined;
-        return AnilistAPI.searchManga(q.trim() || "", p, slug);
-      }
-      case "book": {
-        const slug = typeof g === "string" ? g : undefined;
-        return ITunesAPI.searchBooks(q.trim() || "popular", p, slug);
-      }
-      case "game": {
-        const slug = typeof g === "string" ? g : undefined;
-        return q.trim() ? RawgAPI.searchGames(q, p, slug) : RawgAPI.discoverGames(p, slug);
-      }
-      default:
-        return { results: [], page: 1, total_pages: 1, total_results: 0 };
     }
   }
 
@@ -161,7 +97,7 @@
     await Promise.allSettled(
       top.map(async (g, idx) => {
         try {
-          const res = await fetchPage(reqCat, "", 1, g.id);
+          const res = await catalog.fetchPage(reqCat, "", 1, g.id);
           // Skip writes from a stale category (user tab-jumped while we waited)
           if (activeCategory !== reqCat) return;
           sections[idx] = {
@@ -169,12 +105,12 @@
             items: res.results,
             loading: false,
           };
-        } catch (e: any) {
+        } catch (e) {
           if (activeCategory !== reqCat) return;
           sections[idx] = {
             ...sections[idx],
             loading: false,
-            error: typeof e === "string" ? e : (e?.message ?? "Erro."),
+            error: errorMessage(e, "Erro."),
           };
         }
       }),
@@ -191,11 +127,11 @@
     error = "";
     loading = true;
     try {
-      const res = await fetchPage(activeCategory, newQuery, 1, activeGenre);
+      const res = await catalog.fetchPage(activeCategory, newQuery, 1, activeGenre);
       items = res.results;
       totalPages = res.total_pages ?? 1;
-    } catch (e: any) {
-      error = typeof e === "string" ? e : (e?.message ?? "Erro ao buscar dados.");
+    } catch (e) {
+      error = errorMessage(e, "Erro ao buscar dados.");
     } finally {
       loading = false;
     }
@@ -206,11 +142,11 @@
     appending = true;
     try {
       const next = page + 1;
-      const res = await fetchPage(activeCategory, query, next, activeGenre);
+      const res = await catalog.fetchPage(activeCategory, query, next, activeGenre);
       items = [...items, ...res.results];
       page = next;
-    } catch (e: any) {
-      error = typeof e === "string" ? e : (e?.message ?? "Erro ao carregar mais.");
+    } catch (e) {
+      error = errorMessage(e, "Erro ao carregar mais.");
     } finally {
       appending = false;
     }

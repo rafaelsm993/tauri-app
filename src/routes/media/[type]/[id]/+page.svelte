@@ -3,12 +3,11 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { onDestroy } from "svelte";
-  import { TmdbAPI } from "$lib/api/tmdb";
-  import { AnilistAPI } from "$lib/api/anilist";
-  import { ITunesAPI } from "$lib/api/itunes";
-  import { RawgAPI } from "$lib/api/rawg";
+  import { catalog } from "$lib/api/catalog";
+  import { errorMessage } from "$lib/utils/errors";
   import type { MediaDetail } from "$lib/types/media";
   import { ui } from "$lib/stores/ui.svelte";
+  import { formatRuntime, initials } from "$lib/utils/format";
 
   let detail = $state<MediaDetail | null>(null);
   let loading = $state(true);
@@ -49,21 +48,7 @@
 
   const year = $derived(detail?.release_date?.slice(0, 4) ?? "");
   const rating = $derived(detail && detail.vote_average > 0 ? detail.vote_average.toFixed(1) : "");
-  const runtimeStr = $derived(
-    detail?.runtime
-      ? detail.media_type === "book"
-        ? `${detail.runtime} páginas`
-        : `${Math.floor(detail.runtime / 60)}h ${detail.runtime % 60}m`
-      : "",
-  );
-
-  // Build initials (max 2 chars) from a person's name for avatar fallbacks.
-  function initials(name: string): string {
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return "?";
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
+  const runtimeStr = $derived(detail ? formatRuntime(detail.runtime, detail.media_type) : "");
 
   // All providers (TVmaze, Jikan, OpenLibrary) now return absolute image URLs
   // in poster_path / backdrop_path — no path prefixing required.
@@ -76,62 +61,9 @@
     detail = null;
 
     try {
-      switch (type) {
-        case "movie": {
-          const numId = parseInt(id, 10);
-          if (isNaN(numId)) {
-            error = "ID inválido.";
-            break;
-          }
-          detail = await TmdbAPI.movieDetails(numId);
-          break;
-        }
-        case "tv": {
-          const numId = parseInt(id, 10);
-          if (isNaN(numId)) {
-            error = "ID inválido.";
-            break;
-          }
-          detail = await TmdbAPI.tvDetails(numId);
-          break;
-        }
-        case "anime": {
-          const numId = parseInt(id, 10);
-          if (isNaN(numId)) {
-            error = "ID inválido.";
-            break;
-          }
-          detail = await AnilistAPI.animeDetails(numId);
-          break;
-        }
-        case "manga": {
-          const numId = parseInt(id, 10);
-          if (isNaN(numId)) {
-            error = "ID inválido.";
-            break;
-          }
-          detail = await AnilistAPI.mangaDetails(numId);
-          break;
-        }
-        case "book": {
-          const volumeId = decodeURIComponent(id);
-          detail = await ITunesAPI.bookDetails(volumeId);
-          break;
-        }
-        case "game": {
-          const numId = parseInt(id, 10);
-          if (isNaN(numId)) {
-            error = "ID inválido.";
-            break;
-          }
-          detail = await RawgAPI.gameDetails(numId);
-          break;
-        }
-        default:
-          error = "Tipo de mídia inválido.";
-      }
-    } catch (e: any) {
-      error = typeof e === "string" ? e : (e?.message ?? "Erro ao carregar detalhes.");
+      detail = await catalog.fetchDetail(type, id);
+    } catch (e) {
+      error = errorMessage(e, "Erro ao carregar detalhes.");
     } finally {
       loading = false;
     }
