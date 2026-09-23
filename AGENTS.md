@@ -1,30 +1,82 @@
-# tauri-app — Agent & Contributor Guide (pointer)
+# tauri-app — Agent & Contributor Guide
 
-> **Full guide moved to the private Obsidian vault** — this repo is public;
-> detailed agent instructions, workflow internals, and conventions now live
-> outside it, in a private repo synced across devices via an Obsidian
-> auto-sync plugin (always up to date, no manual pull needed).
+Tauri 2 desktop app. SvelteKit SPA (Svelte 5 runes, TypeScript strict) talks to a
+stateless Rust proxy over IPC. Providers: TMDB (movie/tv), AniList (anime/manga),
+RAWG (games), iTunes (books). No database, no user state.
 
-**Read the real guide here:**
-`Programming/Tauri App/agent-config/AGENTS.md` in the `obisidian-journal`
-vault (github.com/rafaelsm993/obisidian-journal, private).
+## Map
+| What | Where |
+|---|---|
+| Rust commands (one module per provider) | `src-tauri/src/api/<provider>.rs` |
+| Shared HTTP client | `src-tauri/src/api/http.rs` (`use super::http::client as http;`) |
+| Command registration | `src-tauri/src/lib.rs` → `generate_handler![]` |
+| Permissions / capabilities | `src-tauri/capabilities/*.json` |
+| IPC service per provider | `src/lib/api/<provider>.ts` (`invoke` → map to shared types) |
+| Shared types | `src/lib/types/media.ts` (`MediaItem`, `MediaDetail`, `PaginatedResult`) |
+| Components | `src/lib/components/{media,ui}/*.svelte` |
+| Stores | `src/lib/stores/*.svelte.ts` (class + `$state`, singleton) |
+| Styles | `src/lib/styles/` — SCSS vars/mixins auto-injected; never `@use`/`@import` in components |
 
-Local path on this machine:
-`/run/media/user/FILES/Projects/obisidian-journal/Programming/Tauri App/agent-config/AGENTS.md`
+## The gate — nothing is "done" until this is green
+```bash
+npm run verify   # prettier + eslint + breakpoint lint + svelte-check + vitest + playwright (5 viewports) + cargo fmt/clippy(-D warnings)/test
+```
+Fast loops: `npm run test:watch`, `npx playwright test --project=phone-small`, `cd src-tauri && cargo test <name>`, `npm run check`.
 
-If you are an AI agent working in this repo and cannot reach that path,
-stop and ask the user for the current guide rather than improvising
-conventions — this stub intentionally carries no rules of its own, so
-guessing risks contradicting the real one.
+## Workflow for every feature / fix
+1. **Intake** — restate the goal in one sentence; list files you'll touch (read them first).
+2. **Plan** — for >3 files, write `.hermes/plans/<date>-<slug>.md` and get a yes.
+3. **RED** — write the failing test first (Rust `#[cfg(test)]` next to the code; TS `*.test.ts` next to the file). Run it; see it fail for the right reason.
+4. **GREEN** — minimal code to pass.
+5. **Refactor** — remove duplication, name things, keep functions small. Tests stay green.
+6. **Verify** — `npm run verify` exit 0. For UI changes also `npm run tauri dev` and look at it at full size **and** dragged down to the 360 px minimum.
+7. **Handoff** — summary: what changed, gate output tail, anything not verified.
+Commits/branches only with the user's explicit OK. Conventional Commits (`feat(scope): …`).
 
-See also in the same vault folder:
-- `agent-config/.claude/agents/tauri-app-lead.md` — the lead-agent loop
-- `agent-config/.github/agents/tauri-app.agent.md` — Copilot agent config
-- `agent-config/.github/copilot-instructions.md` — Copilot project guidelines
-- `agent-config/.github/instructions/`, `agent-config/.github/prompts/` —
-  supporting instruction/prompt files
+## Tauri 2 CLI — use it, don't hand-roll
+| Need | Command |
+|---|---|
+| Environment report (paste into bug reports) | `npm run tauri info` |
+| Dev app | `npm run tauri dev` |
+| Add an official plugin (Cargo + npm + capability in one go) | `npm run tauri add <plugin>` |
+| List / create permissions | `npm run tauri permission ls` · `npm run tauri permission new` |
+| Create a capability | `npm run tauri capability new` |
+| Regenerate app icons | `npm run tauri icon <src.png>` |
+| Release build (only when asked) | `npm run tauri build` |
+Never edit `src-tauri/gen/` by hand.
 
-The `tauri-project-docs-sync` Hermes skill documents this split (originally
-written for `GOALS.md`/`GOALS-QA.md`/sprints; the same vault folder now also
-holds this agent-config archive).
-</content>
+## Rust conventions
+- Commands are thin: parse args → call a **pure helper** → shape JSON. Put logic in pure fns and unit-test those (see `rawg::total_pages`).
+- Use the shared `http()` client; never `Client::new()` per call.
+- Run independent requests concurrently with `tokio::join!` (see `rawg_details`).
+- No `unwrap()`/`expect()` in command paths; propagate with `?` + `map_err`.
+- New commands: prefer a typed `Serialize` struct over `serde_json::Value` when the frontend shape is fixed.
+- Least privilege: a new plugin/command gets only the permissions it needs in `capabilities/`.
+- Secrets: `TMDB_API_KEY`/`RAWG_API_KEY` come from `.env` via `build.rs`; never hardcode.
+
+## Frontend conventions
+- Svelte 5 only: `$props`, `$state`, `$derived`, `$effect`; `onclick` not `on:click`; no `writable()`.
+- Prefer `$derived` over `$effect`; `$effect` is for side effects only (DOM, IPC), never to sync state.
+- Keyed `{#each list as x (x.id)}` always.
+- Components never call `invoke` directly — go through `src/lib/api/*`.
+- Every provider maps to the shared types; the UI stays provider-agnostic.
+- Accessible by default: real `<button type="button">`, `aria-*` state, labelled nav.
+- Test UI with `@testing-library/svelte` by role/name; mock IPC with `@tauri-apps/api/mocks` (`mockIPC`, `clearMocks`).
+- Design tokens only (`$color-*`, `$spacing-*`, `$radius-*`); no new colors.
+- Formatting: Prettier owns it — double quotes in `.ts` **and** `.svelte`, 100 cols, trailing commas. Never hand-format; run `npm run format`.
+
+## Responsive — every component, every time
+Supported range: **360 px phone → 1920 px+ desktop**, mouse **and** touch. The desktop window's minimum is 360×560 (`tauri.conf.json`), so small layouts are reachable on desktop too.
+- **Design the smallest layout first**, then add room. Every new component must look right at 360, 768, 1280, and 1920.
+- **Breakpoints:** only `@include respond-to(sm|md|lg|xl|2xl)` (desktop-first, `max-width`). Raw px inside `@media` fails `npm run lint:bp`. Need a new width? Add a `$bp-*` token.
+- **Input, not width:** use `@include touch` / `@include hover-capable` for hover effects and target size. A 1280 px touchscreen exists; a 400 px mouse window exists.
+- **No hover-only content.** Anything revealed on `:hover` must also be visible under `@include touch` and on `:focus-visible`.
+- **Touch targets:** ≥ `$touch-target` (44 px) under `@include touch`.
+- **Fluid over fixed:** `clamp()`, `min()`, `minmax(0, 1fr)`, `flex-wrap`, `min-width: 0` on flex/grid children. No fixed widths above 160 px without a `max-width: 100%`.
+- **Never** hide overflow on `html`/`body` to "fix" a layout; find the wide element instead.
+- **Rails/tabs** that can exceed the width must scroll horizontally (`overflow-x: auto`), not wrap into a broken grid or get clipped.
+- **Tests:** a new screen gets an entry in `SCREENS` in `e2e/responsive.spec.ts`. A new interactive component gets a touch-target or visibility assertion there if it has hover or small controls. IPC is faked in `e2e/fixtures/tauri-ipc.ts`; add fixtures for new commands.
+- Mobile builds (`tauri android|ios`) aren't initialised yet. Keep Rust free of desktop-only APIs outside `#[cfg(desktop)]` so enabling them later is config, not a rewrite.
+
+## Adding a provider (checklist)
+Rust module + pure-helper tests → `api/mod.rs` → `lib.rs` handler → `src/lib/api/<p>.ts` + `mockIPC` test → types in `media.ts` if needed → `+page.svelte` switch cases → `npm run verify`.

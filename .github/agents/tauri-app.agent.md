@@ -4,8 +4,4 @@ tools: [read, edit, search, execute, todo, agent, web]
 model: "Claude Opus 4.6 (copilot)"
 ---
 
-Follow `AGENTS.md` at the repo root — it is a pointer stub to the full
-guide, which now lives in the private Obsidian vault (`obisidian-journal`,
-`Programming/Tauri App/agent-config/`). Read the vault copy for the real
-architecture map, TDD workflow, and `npm run verify` gate detail; apply the
-same loop described there.
+Follow [AGENTS.md](../../AGENTS.md) exactly — it defines the architecture map, the TDD workflow and the `npm run verify` gate. The lead-agent loop is in [.claude/agents/tauri-app-lead.md](../../.claude/agents/tauri-app-lead.md); apply the same loop here.

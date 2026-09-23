@@ -34,7 +34,7 @@ const DELETED_FILES = [
   "src/lib/components/ui/WatchlistButton.svelte",
   "src-tauri/src/api/auth.rs",
   "src-tauri/src/api/watchlist.rs",
-  "src-tauri/tauriflix.db",
+  "src-tauri/tauri-app.db",
 ];
 
 test("deleted files are gone", () => {

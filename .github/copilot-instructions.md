@@ -1,9 +1,3 @@
-# tauri-app — Project Guidelines (pointer)
+# tauri-app — Project Guidelines
 
-> Full guidelines moved to the private Obsidian vault — see `AGENTS.md` at
-> the repo root, which is itself a pointer stub to
-> `Programming/Tauri App/agent-config/` in the `obisidian-journal` vault
-> (private, github.com/rafaelsm993/obisidian-journal).
-
-Gate: `npm run verify` (unchanged, still enforced locally and in CI).
-</content>
+The single source of truth for conventions, workflow, and the quality gate is [AGENTS.md](../AGENTS.md). Read it before making changes. Gate: `npm run verify`.

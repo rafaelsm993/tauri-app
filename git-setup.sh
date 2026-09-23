@@ -18,7 +18,7 @@ git commit --allow-empty -m "chore: initialize dev branch"
 
 echo "── Pushing to remote ──"
 # Replace with your actual remote URL
-git remote add origin https://github.com/YOUR_ORG/tauriflix.git
+git remote add origin https://github.com/rafaelsm993/tauri-project.git
 git push -u origin main
 git push -u origin dev
 

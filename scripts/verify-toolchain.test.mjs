@@ -1,5 +1,5 @@
 // scripts/verify-toolchain.test.mjs
-// Verifies the build prerequisites for TauriFlix on whichever machine runs it.
+// Verifies the build prerequisites for tauri-app on whichever machine runs it.
 //   Windows laptop:  PS> powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
 //   Arch desktop:    $ node --test scripts/verify-toolchain.test.mjs
 // Windows-only checks are skipped on Linux and vice versa.

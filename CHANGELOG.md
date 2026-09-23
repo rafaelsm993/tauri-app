@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to TauriFlix are documented here.
+All notable changes to tauri-app are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 Versions follow [Semantic Versioning](https://semver.org/).
 

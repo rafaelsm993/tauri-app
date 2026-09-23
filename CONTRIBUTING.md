@@ -1,4 +1,4 @@
-# Contributing to TauriFlix
+# Contributing to tauri-app
 
 ## Branch Strategy
 

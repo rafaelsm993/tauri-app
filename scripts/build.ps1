@@ -1,5 +1,5 @@
 # scripts/build.ps1
-# Produces a release build and Windows bundles (MSI + NSIS) for TauriFlix.
+# Produces a release build and Windows bundles (MSI + NSIS) for tauri-app.
 # Usage (from Windows PowerShell, repo root):
 #   PS> powershell -ExecutionPolicy Bypass -File scripts\build.ps1
 $ErrorActionPreference = "Stop"
